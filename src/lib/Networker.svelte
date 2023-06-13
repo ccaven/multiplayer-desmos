@@ -1,5 +1,5 @@
 <script lang="ts" context="module">
-    import type { DataConnection, MediaConnection } from 'peerjs';
+    import type { DataConnection } from 'peerjs';
     import { getContext } from "svelte";
 
     export type NetworkEvent<Key extends string, Payload> = {

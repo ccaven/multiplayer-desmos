@@ -9,8 +9,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
     import Desmos, { type ExpressionState } from 'desmos';
-    import type { Update } from "$lib/network";
-    import { useNetworker } from "$lib/network";
+    import { useNetworker, type Update } from "$lib/Networker.svelte";
     
     type WithId<T extends string> = `${T}-${number}`;
 
