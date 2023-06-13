@@ -92,7 +92,7 @@
     
     const name = getContext<Writable<string>>("player-name");
 
-    export const networker: NetworkManager = {
+    const networker: NetworkManager = {
         addHandler(peerId, key, handler) {
             if (!handlers.has(peerId)) handlers.set(peerId, new Map());
             if (!handlers.get(peerId)?.has(key)) handlers.get(peerId)?.set(key, []);
@@ -271,4 +271,4 @@
 
 </script>
 
-<slot {networker}/>
+<slot/>

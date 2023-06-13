@@ -2,6 +2,7 @@
     import Scene from '$lib/Scene.svelte';
     import { writable } from 'svelte/store';
     import { setContext } from 'svelte';
+    import Networker from '$lib/Networker.svelte';
     let enabled = false;
     let name = writable<string>();
     setContext("player-name", name);
@@ -10,7 +11,9 @@
 <div>
     
     {#if enabled}
-        <Scene/>
+        <Networker>
+            <Scene/>
+        </Networker>
     {:else}
         <div id="begin">
             <input type="text" placeholder="What's your name?" bind:value={$name}>

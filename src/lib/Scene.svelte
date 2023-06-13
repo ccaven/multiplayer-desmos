@@ -1,12 +1,13 @@
 <script lang="ts">
-    import Networker, { type NetworkManager } from '$lib/Networker.svelte';
+    import { useNetworker, type NetworkManager } from '$lib/Networker.svelte';
     import DesmosGraph from '$lib/DesmosGraph.svelte';
     import MovableModal from './MovableModal.svelte';
     import { onMount } from 'svelte';
     import { writable } from 'svelte/store';
+    import InviteLink from './InviteLink.svelte';
+    import NameTag from './NameTag.svelte';
 
-    let networker: NetworkManager;
-
+    let networker: NetworkManager = useNetworker();
     let peerList = writable<string[]>([]);
     onMount(() => {
         networker.usePeerNames().subscribe(map => {
@@ -15,28 +16,14 @@
     });
 </script>
 
-<Networker bind:networker={networker}>
-    <DesmosGraph/>
+<DesmosGraph/>
 
-    <MovableModal x={10} y={10}>
-        
-        {#each $peerList as peerId}
-            <p style:display="inline">{peerId}</p>
-        {/each}
-        <p style:display="inline">Test</p>
+<MovableModal x={10} y={10}>
+    
+    {#each $peerList as peerId}
+        <NameTag>{peerId}</NameTag>
+    {/each}
 
-        <button on:click={() => navigator.clipboard.writeText(networker.useJoinLink())}>
-            Copy Invite Link
-        </button>    
-    </MovableModal>
-</Networker>
+    <InviteLink/>
 
-<style>
-    p {
-        background-color: darkred;
-        padding: 0.3em;
-        color: white;
-        border: 1px solid black;
-        border-radius: 50%;
-    }
-</style>
+</MovableModal>
