@@ -35,7 +35,12 @@
         addDataConnection(peerId: string, connection: DataConnection): void;
         connectTo(peerId: string): void;
         broadcast<U extends AnyUpdate>(key: Key<U>, payload: Payload<U>): void;
+        broadcastLimited<U extends AnyUpdate>(key: Key<U>, payload: Payload<U>, ids: string[]): void;
+        broadcastSingle<U extends AnyUpdate>(key: Key<U>, payload: Payload<U>, id: string): void;
         usePeerId(): string | undefined;
+        usePeerList(): Writable<string[]>;
+        usePeerNames(): Writable<Map<string, string>>;
+        useJoinLink(): string;
     }
 
     type Vector3 = { x: number, y: number, z: number };
@@ -53,7 +58,12 @@
 
     export type UserListUpdate = Update<"user-list", string[]>;
 
-    export type PingUpdate = Update<"ping", null>;
+    export type PingUpdate = Update<"ping", string>;
+
+    export type NameUpdate = Update<"name", {
+        from: string,
+        name: string
+    }>;
 
     export function useNetworker() {
         return getContext("networker") as NetworkManager;
@@ -65,21 +75,9 @@
 </script>
 
 <script lang="ts">
-    /**
-     * TODO
-     * 
-     * Fix disconnections
-     * 
-     * Create hook: "useNetworkEvent"
-     * Create hook: "useRemoteSourceNode"
-     * Create hook: "useClient"
-     * 
-     * setContext("classroom3d-networker", networker)
-     * 
-    */
 
     import Peer from 'peerjs';
-    import { writable } from 'svelte/store';
+    import { writable, type Writable } from 'svelte/store';
     import { setContext } from 'svelte';
 
     const client: Peer = new Peer();
@@ -90,8 +88,11 @@
     const globalHandlers: GlobalHandlers = new Map();
 
     const peerList = writable<string[]>([]);
+    const peerNames = writable(new Map<string, string>());
     
-    const networker: NetworkManager = {
+    const name = getContext<Writable<string>>("player-name");
+
+    export const networker: NetworkManager = {
         addHandler(peerId, key, handler) {
             if (!handlers.has(peerId)) handlers.set(peerId, new Map());
             if (!handlers.get(peerId)?.has(key)) handlers.get(peerId)?.set(key, []);
@@ -125,6 +126,11 @@
             dataConnections.get(peerId)?.close();
             dataConnections.delete(peerId);
 
+            peerNames.update(map => {
+                map.delete(peerId);
+                return map;
+            });
+
             peerList.update(currentPeerList => currentPeerList.filter(id => id != peerId));
         },
 
@@ -135,10 +141,13 @@
 
             dataConnections.get(peerId)?.on("data", data => {
                 let message = data as Message;
-                if (message.key == "user-list") console.log(message);
+
+                // Invoke handlers
                 handlers.get(peerId)?.get(message.key)?.forEach(handler => {
                     handler(message.payload);
                 });
+
+                // Invoke global handlers
                 globalHandlers.get(message.key)?.forEach(handler => handler(message.payload));
             });
 
@@ -155,23 +164,37 @@
             if (dataConnections.has(peerId)) return;
 
             const connection = client.connect(peerId);
-            connection.on("open", () => {
-                this.addDataConnection(peerId, connection);
-            });
+            connection.on("open", () => this.addDataConnection(peerId, connection));
         },
 
         broadcast(key, payload) {
             if (!client.id) return;
 
-            dataConnections.forEach(connection => {
-                connection.send({
-                    key, payload, from: client.id
-                } as Message);
-            });
+            let message: Message = { key, payload, from: client.id };
+
+            dataConnections.forEach(connection => connection.send(message));
         },
 
-        usePeerId() {
-            return client.id;
+        broadcastLimited(key, payload, ids) {
+            if (!client.id) return;
+
+            ids.forEach(id => this.broadcastSingle(key, payload, id));
+        },
+
+        broadcastSingle(key, payload, id) {
+            if (!client.id) return;
+
+            let message: Message = { key, payload, from: client.id };
+
+            dataConnections.get(id)?.send(message);
+        },
+
+        usePeerId() { return client.id; },
+        usePeerList() { return peerList; },
+        usePeerNames() { return peerNames; },
+
+        useJoinLink() {
+            return `${window.location}?join-id=${client.id}`;
         }
     };
 
@@ -196,7 +219,6 @@
                     } as Message);
                 } else {
                     connection.on("open", () => {
-                        console.log([...dataConnections.keys()]);
                         connection.send({
                             key: "user-list",
                             from: client.id,
@@ -205,31 +227,48 @@
                     });
                 }
             });
-    }
-
-        console.log(`${window.location}?join-id=${client.id}`);
+        }
     });
 
     client.on("connection", connection => {
-        networker.addDataConnection(connection.peer, connection);
+        networker.addDataConnection(connection.peer, connection);        
     });
 
     /** When we get a new user-list, try to connect to each user */
     networker.addGlobalHandler<UserListUpdate>("user-list", userList => {
-        console.log(userList);
-        userList.forEach(peerId => networker.connectTo(peerId));
+        userList.forEach(networker.connectTo);
     });
 
-    export function usePeerList() {
-        return peerList;
-    }
+    networker.addGlobalHandler<NameUpdate>("name", ({ from, name }) => {
+        peerNames.update(map => map.set(from, name));
+    });
+
+    
+    let peerPingCounter = new Map<string, number>();
+    let maxPeerPingCount = 30;
+    
+    networker.addGlobalHandler<PingUpdate>("ping", peerId => {
+        peerPingCounter.set(peerId, 0);
+    });
 
     setInterval(() => {
-        networker.broadcast<PingUpdate>("ping", null);
+        networker.broadcast<PingUpdate>("ping", client.id);
+        networker.broadcast<NameUpdate>("name", { from: client.id, name: $name });
+
+        // Enforce ping rules
+        peerPingCounter.forEach((pingCount, peerId, map) => {
+            map.set(peerId, pingCount + 1);
+
+            if (pingCount > maxPeerPingCount) {
+                networker.disconnectFrom(peerId);
+                map.delete(peerId);
+            }
+        });
     }, 1_000);
+
 
     setNetworker(networker);
 
 </script>
 
-<slot/>
+<slot {networker}/>
