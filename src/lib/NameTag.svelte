@@ -1,6 +1,6 @@
-<p>
+<div class="dcg-btn-flat-gray dcg-settings-pillbox dcg-action-settings">
     <slot></slot>
-</p>
+</div>
 
 <style>
     p {

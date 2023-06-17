@@ -64,8 +64,8 @@
             autosize: false,
             images: false,
             folders: false,
-            projectorMode: true,
-            notes: true     
+            projectorMode: false,
+            notes: true
         });
 
         resetLastExpressions();
@@ -137,7 +137,6 @@
             resetLastExpressions();
         }, 100);
     });
-
     
 
     // Add the handlers to the networker
