@@ -18,12 +18,13 @@
 
 <DesmosGraph/>
 
+<InviteLink/>
+
 <MovableModal x={10} y={10}>
     
     {#each $peerList as peerId}
         <NameTag>{peerId}</NameTag>
     {/each}
 
-    <InviteLink/>
 
 </MovableModal>
