@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import { useNetworker } from "./Networker.svelte";
+    import { writable } from "svelte/store";
 
     let networker = useNetworker();
-    let d2: HTMLDivElement;
+    let d2: HTMLButtonElement;
 
     function click() {
         navigator.clipboard.writeText(networker.useJoinLink());
@@ -13,22 +15,25 @@
             d2.style.backgroundColor = old;
         }, 250);
     }
-</script>
-<!--
-        <button
-        on:click={() => navigator.clipboard.writeText(networker.useJoinLink())}
-    >
-        Copy Invite Link
-    </button>
--->
-<div id="d1">
-    <div id="d2" bind:this={d2}>
-        <button on:click={click}>
-            Copy Invite Link
-        </button>
-    </div>
-</div>
 
+    let peerList = writable<string[]>([]);
+    onMount(() => {
+        networker.usePeerNames().subscribe(map => {
+            peerList.set([...map.values()])
+        });
+    });
+</script>
+
+<div id="d1">
+    <div class="d2">
+        {#each $peerList as peerId}
+            <p class="d3">{peerId}</p>
+        {/each}
+        <button on:click={click} class="d3" bind:this={d2}>
+            Copy Invite Link
+        </button>        
+    </div>    
+</div>
 
 <style>
     #d1 {
@@ -37,23 +42,25 @@
         position: absolute;
         display: block;
     }
-    #d2 {
+    .d2 {
         position: absolute;
-        bottom: 0;
-        right: 0;
+        float: right;
+        font-size: 16px;
+        text-align: center;
+        white-space: nowrap;
+        font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+        bottom: 0px;
+        right: 0px;
+    }
+
+    .d3 {
         background-color: rgb(237, 237, 237);
         border: 1px solid rgba(0, 0, 0, 0.1);
         border-radius: 5px;
         box-shadow: 0 0 5px rgba(0,0,0,0.15);
-        cursor: pointer;
+        padding: 7px;
         margin-top: 3px;
         margin-bottom: 3px;
-        font-size: 16px;
-        text-align: center;
-        white-space: nowrap;
-        padding: 7px;
-        font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-        transition: 0.5s ease;
     }
 
     button {
@@ -64,5 +71,11 @@
         font: inherit;
         cursor: pointer;
         outline: inherit;
+        transition: 0.5s ease;
+        cursor: pointer;
+    }
+
+    p {
+        display: inline;
     }
 </style>
