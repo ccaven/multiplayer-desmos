@@ -8,5 +8,5 @@ Toy multiplayer desmos graphing calculator intended to aid small group peer tuto
     - [ ] Add event for "annotations"
     - [ ] Add user metadata: identifying color
 - [ ] Frontend
-    - [ ] Match CSS with Desmos elements
+    - [x] Match CSS with Desmos elements
     - [ ] Add "Save to Desmos"

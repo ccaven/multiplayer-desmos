@@ -10,7 +10,7 @@
         navigator.clipboard.writeText(networker.useJoinLink());
 
         let old = "rgb(237, 237, 237)";
-        d2.style.backgroundColor = "rgb(50, 250, 50)";
+        d2.style.backgroundColor = "rgb(100, 250, 100)";
         setTimeout(() => {
             d2.style.backgroundColor = old;
         }, 250);
