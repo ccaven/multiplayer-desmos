@@ -194,6 +194,9 @@
         usePeerNames() { return peerNames; },
 
         useJoinLink() {
+            if (urlSearchParams.has("join-id")) {
+                return `${window.location}?join-id=${urlSearchParams.get("join-id")}`;
+            }
             return `${window.location}?join-id=${client.id}`;
         }
     };
