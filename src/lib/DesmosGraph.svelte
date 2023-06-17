@@ -61,7 +61,7 @@
         // Initialize the calculator
         // TODO: Be more precise with what is allowed/not allowed
         calculator = Desmos.GraphingCalculator(divEle, {
-            autosize: false,
+            autosize: true,
             images: false,
             folders: false,
             projectorMode: false,
