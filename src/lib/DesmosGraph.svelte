@@ -206,6 +206,10 @@
         return full?.indexOf("___") == -1 ? prefix + full : full;
     }
 
+    export function setExpressions (expressions: ExpressionState[]) {
+        calculator.setExpressions(expressions);
+    }
+
 </script>
 
 

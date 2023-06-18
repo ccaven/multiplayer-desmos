@@ -2,6 +2,9 @@
     import { onMount } from "svelte";
     import { useNetworker } from "./Networker.svelte";
     import { writable } from "svelte/store";
+    import type DesmosGraph from "./DesmosGraph.svelte";
+
+    export let graph: DesmosGraph;
 
     let networker = useNetworker();
     let d2: HTMLButtonElement;
@@ -14,6 +17,22 @@
         setTimeout(() => {
             d2.style.backgroundColor = old;
         }, 250);
+    }
+
+    async function loadGraph() {
+        try {
+            let graphUrl = prompt("Enter graph URL:");
+            if (graphUrl) {
+                let data: any = JSON.parse(
+                    await fetch(graphUrl, { headers: { "Accept": "application/json" } })
+                    .then(r=>r.blob())
+                    .then(b=>b.text()));
+                console.log(data);
+                graph.setExpressions(data.state.expressions.list);
+            }
+        } catch(e) {
+            console.log("Loading failed.", e);
+        }
     }
 
     let peerList = writable<string[]>([]);
@@ -29,6 +48,9 @@
         {#each $peerList as peerId}
             <p class="d3">{peerId}</p>
         {/each}
+        <button on:click={loadGraph} class="d3" bind:this={d2}>
+            Load Graph
+        </button>     
         <button on:click={click} class="d3" bind:this={d2}>
             Copy Invite Link
         </button>        
