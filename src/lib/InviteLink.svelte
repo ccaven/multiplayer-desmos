@@ -1,16 +1,13 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { useNetworker } from "./Networker.svelte";
-    import { writable } from "svelte/store";
     import type DesmosGraph from "./DesmosGraph.svelte";
+    import { inviteLink } from "./store";
 
     export let graph: DesmosGraph;
 
-    let networker = useNetworker();
     let d2: HTMLButtonElement;
 
     function click() {
-        navigator.clipboard.writeText(networker.useJoinLink());
+        navigator.clipboard.writeText(inviteLink as string);
 
         let old = "rgb(237, 237, 237)";
         d2.style.backgroundColor = "rgb(100, 250, 100)";
@@ -34,20 +31,10 @@
             console.log("Loading failed.", e);
         }
     }
-
-    let peerList = writable<string[]>([]);
-    onMount(() => {
-        networker.usePeerNames().subscribe(map => {
-            peerList.set([...map.values()])
-        });
-    });
 </script>
 
 <div id="d1">
     <div class="d2">
-        {#each $peerList as peerId}
-            <p class="d3">{peerId}</p>
-        {/each}
         <button on:click={loadGraph} class="d3" bind:this={d2}>
             Load Graph
         </button>     

@@ -1,5 +1,5 @@
 {
-	"name": "classroom3d",
+	"name": "code-together",
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
@@ -22,8 +22,10 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@types/peerjs": "^1.1.0",
-		"peerjs": "^1.4.7",
-		"desmos": "^1.5.4"
+		"@syncedstore/core": "^0.5.1",
+		"@syncedstore/svelte": "^0.5.1",
+		"desmos": "^1.5.4",
+		"y-webrtc": "^10.2.5",
+		"yjs": "^13.6.4"
 	}
 }

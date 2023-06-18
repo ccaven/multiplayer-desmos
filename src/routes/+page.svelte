@@ -28,9 +28,7 @@
 </script>
 
 {#if enabled}
-    <Networker>
-        <Scene/>
-    </Networker>
+    <Scene/>
 {:else}
     <div id="background">
         <div id="begin">
