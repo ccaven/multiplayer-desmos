@@ -14,15 +14,17 @@
     type WithId<T extends string> = `${T}-${number}`;
 
     type DesmosUpdateKey = "desmos-add-state" | "desmos-remove-state";
-    
     type DesmosUpdate = Update<WithId<DesmosUpdateKey>, Desmos.ExpressionState>;
     
+    type DesmosResetKey = "desmos-reset";
+    type DesmosReset = Update<WithId<DesmosResetKey>, Desmos.ExpressionState[]>;
+
     let clientTag = new Array(8).fill(0).map((e, i) => Math.random() * 10 | 0).join("") + "___";
 
     let divEle: HTMLDivElement;
 
     const graphId = uid();
-    const withId = <T extends DesmosUpdateKey>(s: T): WithId<T> => `${s}-${graphId}`;
+    const withId = <T extends (DesmosUpdateKey | DesmosResetKey )>(s: T): WithId<T> => `${s}-${graphId}`;
     
     const networker = useNetworker();
 
@@ -56,6 +58,16 @@
         resetLastExpressions();
     }
 
+    function onReset(expressions: ExpressionState[]) {
+        calculator.clearHistory();
+        calculator.removeExpressions(calculator.getExpressions().map(e => {
+            return { id: e.id as string };
+        }));
+        calculator.setExpressions(expressions);
+
+        resetLastExpressions();
+    }
+
     onMount(() => {
 
         // Initialize the calculator
@@ -69,7 +81,7 @@
         });
 
         resetLastExpressions();
-        
+
         // This is the polling interval
         // that checks for updates in the state
         // of the local graph.
@@ -142,6 +154,23 @@
     // Add the handlers to the networker
     networker.addGlobalHandler<DesmosUpdate>(withId("desmos-add-state"), onAddState);
     networker.addGlobalHandler<DesmosUpdate>(withId("desmos-remove-state"), onRemoveState);
+    networker.addGlobalHandler<DesmosReset>(withId("desmos-reset"), onReset);
+
+    let lastList = new Array<string>();
+    networker.usePeerList().subscribe(newList => {
+        console.log(newList);
+        let uniqueIds = newList.filter(peerId => lastList.indexOf(peerId) == -1);
+
+        if (uniqueIds.length > 0 && calculator) {
+            networker.broadcastLimited<DesmosReset>(
+                withId("desmos-reset"), 
+                calculator.getExpressions(), 
+                uniqueIds
+            );
+        }
+
+        lastList = newList;
+    });
 
     // If the component is for some reason
     // removed from the tree, remove its event handlers

@@ -12,7 +12,6 @@
 
     onMount(() => {
         name.subscribe(newName => {
-            console.log(newName);
             if (newName.length > 0) {
                 goButton.style.background = "#00aa1c";
             } else {

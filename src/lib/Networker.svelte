@@ -26,7 +26,6 @@
     type Key<U extends AnyUpdate> = U["key"];
     
     export interface NetworkManager {
-
         addHandler<U extends AnyUpdate>(peerId: string, key: Key<U>, handler: Handler<Payload<U>>): void;
         removeHandler<U extends AnyUpdate>(peerId: string, key: Key<U>, handler: Handler<Payload<U>>): void;
         addGlobalHandler<U extends AnyUpdate>(key: Key<U>, handler: Handler<Payload<U>>): void;
@@ -80,7 +79,11 @@
     import { writable, type Writable } from 'svelte/store';
     import { setContext } from 'svelte';
 
-    const client: Peer = new Peer();
+    const client: Peer = new Peer(/*{
+        host: "https://0.peerjs.com",
+        port: 9000,
+        path: "/myapp"
+    }*/);
 
     const dataConnections = new Map<string, DataConnection>();
 
@@ -137,6 +140,8 @@
         addDataConnection(peerId, connection) {
             if (dataConnections.has(peerId)) return;
 
+            console.log("Connected to ", peerId);
+
             dataConnections.set(peerId, connection);
 
             dataConnections.get(peerId)?.on("data", data => {
@@ -165,6 +170,7 @@
 
             const connection = client.connect(peerId);
             connection.on("open", () => this.addDataConnection(peerId, connection));
+            connection.on("error", console.log);
         },
 
         broadcast(key, payload) {
@@ -205,6 +211,7 @@
     const urlSearchParams = new URLSearchParams(location.search);
     const isLearner = urlSearchParams.has("join-id");
     client.on("open", _ => {
+        console.log("Open");
         if (isLearner) {
             networker.connectTo(urlSearchParams.get("join-id") as string);
         } else {
