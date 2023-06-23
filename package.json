@@ -1,5 +1,5 @@
 {
-	"name": "code-together",
+	"name": "multiplayer-desmos",
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
@@ -26,6 +26,6 @@
 		"@syncedstore/svelte": "^0.5.1",
 		"desmos": "^1.5.4",
 		"y-webrtc": "^10.2.5",
-		"yjs": "^13.6.4"
+		"yjs": "^13.6.5"
 	}
 }

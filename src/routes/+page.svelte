@@ -2,9 +2,10 @@
     import Scene from '$lib/Scene.svelte';
     import { writable } from 'svelte/store';
     import { setContext } from 'svelte';
-    import Networker from '$lib/Networker.svelte';
+    //import Networker from '$lib/Networker.svelte';
     import { onMount } from 'svelte';
-    let enabled = false;
+    let enabled = !false;
+    /*
     let name = writable<string>("");
     setContext("player-name", name);
 
@@ -24,12 +25,14 @@
     function onClick() {
         if ($name.length > 0) enabled = true;
     }
+    */
 
 </script>
 
 {#if enabled}
     <Scene/>
 {:else}
+<!--
     <div id="background">
         <div id="begin">
             <input type="text" placeholder="What's your name?" bind:value={$name}>
@@ -42,6 +45,7 @@
             </button>    
         </div>
     </div>
+-->
 {/if}
 
 <style>

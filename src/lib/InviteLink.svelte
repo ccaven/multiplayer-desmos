@@ -1,4 +1,5 @@
 <script lang="ts">
+    /*
     import type DesmosGraph from "./DesmosGraph.svelte";
     import { inviteLink } from "./store";
 
@@ -31,8 +32,9 @@
             console.log("Loading failed.", e);
         }
     }
+    */
 </script>
-
+<!--
 <div id="d1">
     <div class="d2">
         <button on:click={loadGraph} class="d3" bind:this={d2}>
@@ -43,6 +45,7 @@
         </button>        
     </div>    
 </div>
+-->
 
 <style>
     #d1 {
