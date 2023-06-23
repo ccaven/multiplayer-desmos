@@ -65,7 +65,10 @@
 
         let pastExpressions = calculator.getExpressions();
 
-        yarr.observe(() => {
+        yarr.observe((_, transaction) => {
+
+            console.log(transaction);
+
             let newExpressions = yarr.toArray();
             let curExpressions = calculator.getExpressions();
 
@@ -76,8 +79,20 @@
                 return { id: e.id as string };
             }));
 
-            // add remaining
             calculator.setExpressions(newExpressions);
+
+            // go through each expression:
+            let currentExpressions = calculator.getExpressions();
+            let shouldReorder = newExpressions.some((expr, index) => {
+                return currentExpressions[index].id != expr.id
+            });
+
+            if (shouldReorder) {
+                calculator.setBlank({ allowUndo: true });
+                calculator.setExpressions(newExpressions)
+            }
+
+            // add remaining
             
             // update cache
             pastExpressions = newExpressions;
@@ -88,27 +103,26 @@
             let newExpressions = calculator.getExpressions();
 
             // Look for new expressions
-            let inserts = newExpressions.filter(u => {
-                return !pastExpressions.find(v => u.id == v.id);
-            });
+            // let inserts = newExpressions.filter(u => {
+            //     return !pastExpressions.find(v => u.id == v.id);
+            // });
 
-            let changes = newExpressions.filter(expr => {
-                let pastExpr = pastExpressions.find(v => expr.id == v.id);
-                if (!objectEquals(expr, pastExpr)) {
-                    return true;
-                }
-            });
+            // let changes = newExpressions.filter(expr => {
+            //     let pastExpr = pastExpressions.find(v => expr.id == v.id);
+            //     if (!objectEquals(expr, pastExpr)) {
+            //         return true;
+            //     }
+            // });
 
-            let deletes = pastExpressions.filter(v => {
-                return !newExpressions.find(u => u.id == v.id);
-            });
+            // let deletes = pastExpressions.filter(v => {
+            //     return !newExpressions.find(u => u.id == v.id);
+            // });
 
             // Don't use objectEquals here
-
-
             if (!objectEquals(newExpressions, pastExpressions)) {
-                console.log("change");
                 // encode document as single update
+                // TODO: ensure that the transaction only
+                // encodes the differences
                 ydoc.transact(() => {
                     yarr.delete(0, yarr.length);
                     yarr.insert(0, newExpressions);
@@ -127,6 +141,7 @@
 
 </script>
 
+<!-- Top bar -->
 <main>
     <section>
         
