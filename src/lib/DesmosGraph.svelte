@@ -9,6 +9,8 @@
 
     type UserMetadata = ReturnType<typeof createNickname>;
 
+    const POLL_HZ = 30;
+
     let calculator: Desmos.Calculator;
     let divEle: HTMLDivElement;
 
@@ -67,8 +69,6 @@
 
         yarr.observe((_, transaction) => {
 
-            console.log(transaction);
-
             let newExpressions = yarr.toArray();
             let curExpressions = calculator.getExpressions();
 
@@ -87,36 +87,20 @@
                 return currentExpressions[index].id != expr.id
             });
 
+            // only if we need to re-order
+            // so far this is the only way I've found
+            // since Desmos API doesn't care about order
             if (shouldReorder) {
                 calculator.setBlank({ allowUndo: true });
                 calculator.setExpressions(newExpressions)
             }
-
-            // add remaining
             
             // update cache
             pastExpressions = newExpressions;
         });
 
         setInterval(() => {
-
             let newExpressions = calculator.getExpressions();
-
-            // Look for new expressions
-            // let inserts = newExpressions.filter(u => {
-            //     return !pastExpressions.find(v => u.id == v.id);
-            // });
-
-            // let changes = newExpressions.filter(expr => {
-            //     let pastExpr = pastExpressions.find(v => expr.id == v.id);
-            //     if (!objectEquals(expr, pastExpr)) {
-            //         return true;
-            //     }
-            // });
-
-            // let deletes = pastExpressions.filter(v => {
-            //     return !newExpressions.find(u => u.id == v.id);
-            // });
 
             // Don't use objectEquals here
             if (!objectEquals(newExpressions, pastExpressions)) {
@@ -130,14 +114,8 @@
                 pastExpressions = newExpressions;
             }
 
-        }, 1000 / 60);
-
-        
+        }, 1000 / POLL_HZ);
     });
-
-    export function setExpressions (expressions: ExpressionState[]) {
-        calculator.setExpressions(expressions);
-    }
 
 </script>
 

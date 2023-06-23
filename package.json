@@ -22,8 +22,6 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@syncedstore/core": "^0.5.1",
-		"@syncedstore/svelte": "^0.5.1",
 		"desmos": "^1.5.4",
 		"y-webrtc": "^10.2.5",
 		"yjs": "^13.6.5"
