@@ -1,20 +1,24 @@
 <script lang="ts">
 
+    // TODO:
+    // - Allow annotatons
+    // - Style button link
+
     import { onMount } from 'svelte';
     import Desmos, { type ExpressionState } from 'desmos';
     import * as Y from 'yjs';
     import { WebrtcProvider } from 'y-webrtc';
-    import { makeId, objectEquals, createNickname } from './helper';
+    import { makeId, objectEquals, createUserMetadata, areExpressionsEqual } from './helper';
     import { writable } from 'svelte/store';
 
-    type UserMetadata = ReturnType<typeof createNickname>;
+    type UserMetadata = ReturnType<typeof createUserMetadata>;
 
     const POLL_HZ = 30;
 
     let calculator: Desmos.Calculator;
     let divEle: HTMLDivElement;
 
-    let { imageUrl, colorGroup } = createNickname();
+    let localMeta = createUserMetadata();
 
     let inviteLink: string;
 
@@ -33,9 +37,7 @@
             signaling: [ "wss://signal-us-east-1d.xacer.dev:443" ]
         });
 
-        provider.awareness.setLocalStateField("user", {
-            imageUrl, colorGroup
-        });
+        provider.awareness.setLocalStateField("user", localMeta);
 
         provider.connect();
 
@@ -44,17 +46,54 @@
         });
         
         const yarr = ydoc.getArray<ExpressionState>("equations");
-        const nameList = ydoc.getArray<UserMetadata>("name-list");
+        const userSelections = ydoc.getMap<number>("selections");
+        const userSelectionNodes = new Map<string, HTMLElement>();
 
-        nameList.push([{ imageUrl, colorGroup }]);
+        userSelections.observe(_ => {
+            // Grab all user states
+            const statesIter = provider
+                .awareness
+                .getStates()
+                .values() as IterableIterator<{ user: UserMetadata }>;
 
-        nameList.observe(() => {
-            let names = nameList.toArray();
-            nameStore.update(_ => {
-                return names.filter(u => {
-                    return !objectEquals(u, { imageUrl, colorGroup });
-                });
-            });
+            // Transform into array
+            for (let { user: meta } of statesIter) {
+                // Skip the userId
+                if (meta.userId == localMeta.userId) continue;
+
+                let index = userSelections.get(meta.userId);
+
+                if (index !== undefined && index >= 0) {
+
+                    // Create widget if it doesn't exist
+                    if (!userSelectionNodes.has(meta.userId)) {
+                        const node = document.getElementById(`icon-${meta.userId}`)?.cloneNode() as HTMLElement;
+                        userSelectionNodes.set(meta.userId, node);
+                    }
+
+                    let node = userSelectionNodes.get(meta.userId) as HTMLElement;
+
+                    // Show widget
+                    node.style.setProperty("display", "block");
+                    
+                    // Find box and add the node to the box
+                    // NOTE: Calling appendChild when "node"
+                    // is already a child simply removed
+                    // "node" from it's original parents
+                    // and adds it to the new parents.
+                    let box = Array.from(
+                        document.getElementsByClassName("dcg-expressionitem")
+                    )[index];
+                    
+                    box.appendChild(node);
+
+                } else {
+                    // Hide widget, if it exists
+                    userSelectionNodes
+                        .get(meta.userId)?.style
+                        .setProperty("display", "none");
+                }
+            }
         });
 
         calculator = Desmos.GraphingCalculator(divEle, {
@@ -67,7 +106,7 @@
 
         let pastExpressions = calculator.getExpressions();
 
-        yarr.observe((_, transaction) => {
+        yarr.observe(() => {
 
             let newExpressions = yarr.toArray();
             let curExpressions = calculator.getExpressions();
@@ -76,11 +115,14 @@
             calculator.removeExpressions(curExpressions.filter(u => {
                 return !newExpressions.find(v => v.id == u.id);
             }).map(e => {
+                console.log("Removing ", e.id);
                 return { id: e.id as string };
             }));
 
-            calculator.setExpressions(newExpressions);
-
+            newExpressions.forEach(newExpression => {
+                calculator.setExpression(newExpression);
+            });
+            
             // go through each expression:
             let currentExpressions = calculator.getExpressions();
             let shouldReorder = newExpressions.some((expr, index) => {
@@ -91,6 +133,7 @@
             // so far this is the only way I've found
             // since Desmos API doesn't care about order
             if (shouldReorder) {
+                console.log("Reordering...");
                 calculator.setBlank({ allowUndo: true });
                 calculator.setExpressions(newExpressions)
             }
@@ -99,11 +142,23 @@
             pastExpressions = newExpressions;
         });
 
+        function getSelectedIndex() {
+            const allEquations = Array.from(document.getElementsByClassName("dcg-expressionitem"));
+            const selected = allEquations.findIndex(div => div.classList.contains("dcg-selected"));            
+            return selected;
+        }
+
+
+        setInterval(() => {
+            let selected = getSelectedIndex();
+            let lastIndex = userSelections.get(localMeta.userId);
+            if (lastIndex != selected) userSelections.set(localMeta.userId, selected);
+        }, 1000 / 10);
+
         setInterval(() => {
             let newExpressions = calculator.getExpressions();
 
-            // Don't use objectEquals here
-            if (!objectEquals(newExpressions, pastExpressions)) {
+            if (!areExpressionsEqual(newExpressions, pastExpressions)) {
                 // encode document as single update
                 // TODO: ensure that the transaction only
                 // encodes the differences
@@ -119,15 +174,22 @@
 
 </script>
 
-<!-- Top bar -->
 <main>
+    <!-- Top bar -->
     <section>
         
-        <span class="color-icon yours" style="background-image:url({imageUrl});border-color:{colorGroup.color}"></span>
-            
+        <span 
+            class="color-icon yours" 
+            style:background-image="url({localMeta.imageUrl})"
+            style:border-color="{localMeta.colorGroup.color}"
+        />
         
         {#each $nameStore as meta}
-        <span class="color-icon" style="background-image:url({meta.imageUrl});border-color:{meta.colorGroup.color}"></span>
+            <span 
+                class="color-icon" 
+                style:background-image="url({meta.imageUrl})"
+                style:border-color="{meta.colorGroup.color}"
+            />
         {/each}
 
         {#if inviteLink}
@@ -138,11 +200,22 @@
 
     </section>
 
+    <!-- Desmos graph container -->
     <div
         id="desmos-graph"
         bind:this={divEle}
     />
 </main>
+
+{#each $nameStore as meta}
+    <span 
+        class="color-icon movable"
+        id="icon-{meta.userId}"
+        style:background-image="url({meta.imageUrl})"
+        style:border-color="{meta.colorGroup.color}"
+        style:display="none"
+    />
+{/each}
 
 
 <style>
@@ -181,6 +254,15 @@
         background-position: center;
         background-size: cover;
         border-radius: 50%;
+    }
+
+    .movable {
+        position: absolute;
+        right: 0px;
+        top: 0px;
+        z-index: 10;
+        display: hidden;
+        pointer-events: none;
     }
 
     .yours {

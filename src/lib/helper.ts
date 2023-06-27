@@ -1,3 +1,5 @@
+import type { ExpressionState } from "desmos";
+
 const pfpModules = import.meta.glob("../../static/animals/*.png");
 
 /**
@@ -56,7 +58,7 @@ export function makeId(length: number) {
  * Generates a random nickname for the user
  * @returns An object containing a nickname and a color
  */
-export function createNickname() {
+export function createUserMetadata() {
 
     const colorGroups = [
         { color: '#30bced', light: '#30bced33' },
@@ -104,5 +106,20 @@ export function createNickname() {
     const colorGroup = colorGroups[Math.random() * colorGroups.length | 0];
     const imageUrl = imageUrls[Math.random() * imageUrls.length | 0];
 
-    return { imageUrl, colorGroup };
+    const userId = makeId(8);
+
+    return { imageUrl, colorGroup, userId };
+}
+
+export function areExpressionsEqual(newExpressions: ExpressionState[], pastExpressions: ExpressionState[]) {
+
+
+
+    return objectEquals(newExpressions, pastExpressions);
+
+}
+
+export function addTagToId(id: string, prefix: string, sep: string="||") {
+    if (id.indexOf(sep) == -1) return prefix + sep + id;
+    return id;
 }
