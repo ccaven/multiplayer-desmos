@@ -104,12 +104,18 @@
             notes: true
         });
 
+        calculator.observe("selectedExpressionId", console.log);
+
         let pastExpressions = calculator.getExpressions();
 
         yarr.observe(() => {
 
             let newExpressions = yarr.toArray();
             let curExpressions = calculator.getExpressions();
+
+            if (areExpressionsEqual(pastExpressions, newExpressions)) {
+                return;
+            }
 
             // delete removed expressions
             calculator.removeExpressions(curExpressions.filter(u => {
@@ -135,9 +141,9 @@
             if (shouldReorder) {
                 console.log("Reordering...");
                 calculator.setBlank({ allowUndo: true });
-                calculator.setExpressions(newExpressions)
+                calculator.setExpressions(newExpressions);
             }
-            
+
             // update cache
             pastExpressions = newExpressions;
         });
@@ -162,11 +168,11 @@
                 // encode document as single update
                 // TODO: ensure that the transaction only
                 // encodes the differences
+                pastExpressions = newExpressions;
                 ydoc.transact(() => {
                     yarr.delete(0, yarr.length);
                     yarr.insert(0, newExpressions);
                 });
-                pastExpressions = newExpressions;
             }
 
         }, 1000 / POLL_HZ);
