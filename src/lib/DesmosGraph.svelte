@@ -5,7 +5,6 @@
     // - Style button link
 
     import { onMount } from 'svelte';
-    import type { ExpressionState, Calculator } from 'desmos';
     import * as Y from 'yjs';
     import { WebrtcProvider } from 'y-webrtc';
     import { makeId, objectEquals, createUserMetadata, areExpressionsEqual } from './helper';
@@ -13,6 +12,9 @@
 
     type UserMetadata = ReturnType<typeof createUserMetadata>;
 
+    type ExpressionState = Desmos.ExpressionState;
+    type Calculator = Desmos.Calculator;
+    
     const POLL_HZ = 30;
 
     let calculator: Calculator;

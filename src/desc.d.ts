@@ -4,7 +4,7 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 4.2
 
-declare module "desmos" {
+declare namespace Desmos {
     /**
      * Which features are enabled for your API key.
      */

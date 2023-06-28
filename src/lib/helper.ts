@@ -1,5 +1,3 @@
-import type { ExpressionState } from "desmos";
-
 const pfpModules = import.meta.glob("../../static/animals/*.png");
 
 /**
@@ -71,6 +69,8 @@ export function createUserMetadata() {
         { color: '#1be7ff', light: '#1be7ff33' }
     ]
 
+    const urlPrefix = process.env.NODE_ENV === "production" ? "multiplayer-desmos/" : "";
+
     const imageUrls = [
         "animals/armadillo_1.png",
         "animals/capy_1.png",
@@ -104,16 +104,16 @@ export function createUserMetadata() {
     ]
 
     const colorGroup = colorGroups[Math.random() * colorGroups.length | 0];
-    const imageUrl = imageUrls[Math.random() * imageUrls.length | 0];
+    const imageUrl = urlPrefix + imageUrls[Math.random() * imageUrls.length | 0];
 
     const userId = makeId(8);
 
     return { imageUrl, colorGroup, userId };
 }
 
-export function areExpressionsEqual(newExpressions: ExpressionState[], pastExpressions: ExpressionState[]) {
+export function areExpressionsEqual(newExpressions: Desmos.ExpressionState[], pastExpressions: Desmos.ExpressionState[]) {
 
-
+    // TODO: Use for loop here instead of JSON serialization
 
     return objectEquals(newExpressions, pastExpressions);
 
