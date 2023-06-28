@@ -6,11 +6,11 @@ Toy multiplayer desmos graphing calculator intended to aid small group peer tuto
 
 - [ ] Networking
     - [ ] Add event for "annotations"
-    - [ ] Add user metadata: identifying color
+    - [x] Add user metadata: identifying color
     - [ ] Add event for "highlighted points"
-    - [ ] Add event for "highlighted equation"
+    - [x] Add event for "highlighted equation"
     - [ ] Add event for "kick user"
-    - [ ] Send existing equations to new users
+    - [x] Send existing equations to new users
     - [ ] Manually sync notes
 - [ ] Frontend
     - [x] Match CSS with Desmos elements
