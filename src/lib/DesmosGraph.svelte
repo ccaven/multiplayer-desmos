@@ -5,7 +5,7 @@
     // - Style button link
 
     import { onMount } from 'svelte';
-    import Desmos, { type ExpressionState } from 'desmos';
+    import type { ExpressionState, Calculator } from 'desmos';
     import * as Y from 'yjs';
     import { WebrtcProvider } from 'y-webrtc';
     import { makeId, objectEquals, createUserMetadata, areExpressionsEqual } from './helper';
@@ -15,7 +15,7 @@
 
     const POLL_HZ = 30;
 
-    let calculator: Desmos.Calculator;
+    let calculator: Calculator;
     let divEle: HTMLDivElement;
 
     let localMeta = createUserMetadata();
@@ -24,7 +24,7 @@
 
     let nameStore = writable<UserMetadata[]>([]);
 
-    onMount(() => {
+    const start = () => {
 
         const ydoc = new Y.Doc();
 
@@ -100,11 +100,11 @@
             autosize: true,
             images: false,
             folders: false,
-            projectorMode: false,
-            notes: true
+            expressions: true,
+            trace: true
         });
 
-        calculator.observe("selectedExpressionId", console.log);
+        // calculator.observe("selectedExpressionId", console.log);
 
         let pastExpressions = calculator.getExpressions();
 
@@ -176,9 +176,16 @@
             }
 
         }, 1000 / POLL_HZ);
-    });
+    }
 
 </script>
+
+<svelte:head>
+    <script 
+        src="https://www.desmos.com/api/v1.8/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"
+        on:load={start}
+    ></script>
+</svelte:head>
 
 <main>
     <!-- Top bar -->
