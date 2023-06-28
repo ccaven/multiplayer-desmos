@@ -106,6 +106,49 @@
             trace: true
         });
 
+        // !!!
+        // Here, we fix the Desmos bug: "expression with id [id] already exists"
+        // by removing the event listeners
+        // According to stackoverflow the only way is to
+        // replace the element with a clone of itself
+        // https://stackoverflow.com/questions/4386300/javascript-dom-how-to-remove-all-event-listeners-of-a-dom-object
+        {
+            let newExprDiv: HTMLDivElement = document.getElementsByClassName("dcg-new-math-div").item(0) as HTMLDivElement;
+
+            // TypeScript doesn't like that cloneNode returns a "Node"
+            // @ts-ignore
+            newExprDiv.replaceWith((newExprDiv=newExprDiv.cloneNode(true)));
+
+            // Add new event listener to manually add an expression
+            newExprDiv.onclick = () => {
+                // ... probably should just look at how many expressions exist already
+                let newId = Math.random() * 10000 | 0;
+                
+                calculator.setExpression({
+                    id: newId.toString(),
+                    type: "expression",
+                    latex: " "
+                });
+                // Select last expression
+                setTimeout(() => {
+                    // IMPORTANT: I'm using setTimeout here so the
+                    // DOM has a change to update
+                    // The 
+                    let allExpressions = Array.from(document.getElementsByClassName("dcg-mathitem")) as HTMLDivElement[];
+                    let lastExpression = allExpressions.at(-1);
+                    if (lastExpression) {
+
+                        // We have to focus the textarea
+                        // because trying to .click() or .focus()
+                        // the div itself does nothing
+                        let ta = lastExpression.getElementsByTagName("textarea").item(0);
+                        ta?.focus();
+                    }
+                }, 50); // <-- consider changing to a larger time...
+                        // or somehow waiting for the document to sync
+            }
+        }
+
         // calculator.observe("selectedExpressionId", console.log);
 
         let pastExpressions = calculator.getExpressions();
@@ -192,6 +235,7 @@
 <main>
     <!-- Top bar -->
     <section>
+        <img src="icons8-desmos-200.png" height="65px" alt="Desmos icon by Icons8">
         
         <span 
             class="color-icon yours" 
@@ -208,10 +252,36 @@
         {/each}
 
         {#if inviteLink}
-            <button class="invite-link" on:click={()=>window.navigator.clipboard.writeText(inviteLink)}>
-                Copy Invite<br>Link
+            <button 
+                class="invite-link" 
+                style:place-items="center"
+                style:display="flex"
+                style:justify-content="center"
+                
+            >
+                <p
+                    style:padding="5px"
+                    style:border="1px solid gray"
+                    style:font-family="Courier New"
+                    on:click={event=>{
+                        let ele = event.target;
+                        // @ts-ignore
+                        ele.style.backgroundColor = "green";
+                        setTimeout(() => {
+                            // @ts-ignore
+                            ele.style.backgroundColor = "";
+                        }, 200);
+                        window.navigator.clipboard.writeText(inviteLink)
+                    }}
+                    on:keydown={()=>{}}
+                >
+                    {inviteLink}
+                </p>
             </button>
+            
         {/if}
+
+        
 
     </section>
 
@@ -220,6 +290,33 @@
         id="desmos-graph"
         bind:this={divEle}
     />
+
+    <div 
+        style:position="absolute"
+        style:right="10px"
+        style:bottom="10px"
+        style:font-family="sans serif"
+        style:color="gray"
+    >
+        <a 
+            target="_blank" 
+            href="https://icons8.com/icon/kFcdher8hXQj/desmos"
+            style:text-decoration="none"
+            style:color="green"
+        >
+            Desmos
+        </a> 
+        icon by 
+        <a 
+            target="_blank" 
+            href="https://icons8.com"
+            style:text-decoration="none"
+            style:color="green"
+        >
+            Icons8
+        </a>
+    </div>
+    
 </main>
 
 {#each $nameStore as meta}
@@ -242,6 +339,8 @@
         position: absolute;
         width: 100vw;
         height: 100vh;
+
+        font-family: sans-serif;
     }
     
     section {
@@ -298,10 +397,17 @@
         background: none;
         border: none;
         cursor: pointer;
-        border: 1px solid red;
         position: absolute;
         float: right;
         height: 100%;
+        transition: 0.1s ease;
     }
+
+    /*
+    :global(div.dcg-new-expression.dcg-opened) {
+        transform: translateX(-500px);
+    }
+    */
+
 </style>
 
