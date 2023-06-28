@@ -1,259 +1,305 @@
-
-<script lang="ts" context="module">
-    let _uid = 0;
-    export function uid() {
-        return ++_uid;
-    }
-</script>
-
 <script lang="ts">
-    import { onDestroy, onMount } from 'svelte';
-    import Desmos, { type ExpressionState } from 'desmos';
-    import { useNetworker, type Update } from "$lib/Networker.svelte";
-    
-    type WithId<T extends string> = `${T}-${number}`;
 
-    type DesmosUpdateKey = "desmos-add-state" | "desmos-remove-state";
-    type DesmosUpdate = Update<WithId<DesmosUpdateKey>, Desmos.ExpressionState>;
-    
-    type DesmosResetKey = "desmos-reset";
-    type DesmosReset = Update<WithId<DesmosResetKey>, Desmos.ExpressionState[]>;
+    // TODO:
+    // - Allow annotatons
+    // - Style button link
 
-    let clientTag = new Array(8).fill(0).map((e, i) => Math.random() * 10 | 0).join("") + "___";
+    import { onMount } from 'svelte';
+    import type { ExpressionState, Calculator } from 'desmos';
+    import * as Y from 'yjs';
+    import { WebrtcProvider } from 'y-webrtc';
+    import { makeId, objectEquals, createUserMetadata, areExpressionsEqual } from './helper';
+    import { writable } from 'svelte/store';
 
+    type UserMetadata = ReturnType<typeof createUserMetadata>;
+
+    const POLL_HZ = 30;
+
+    let calculator: Calculator;
     let divEle: HTMLDivElement;
 
-    const graphId = uid();
-    const withId = <T extends (DesmosUpdateKey | DesmosResetKey )>(s: T): WithId<T> => `${s}-${graphId}`;
-    
-    const networker = useNetworker();
+    let localMeta = createUserMetadata();
 
-    let calculator: Desmos.Calculator;
+    let inviteLink: string;
 
-    let lastExpressions: Desmos.ExpressionState[] = [];
+    let nameStore = writable<UserMetadata[]>([]);
 
-    function onAddState(expression: ExpressionState) {
-        // If this is our expression coming back in,
-        // then it must have our prefix attached to it's
-        // id. If that is the case, then remove the prefix
-        // because our local copy of our own expressions
-        // do not contain the prefix.
-        expression.id = removePrefix(expression.id, clientTag);
+    const start = () => {
 
-        calculator.setExpression(expression);
+        const ydoc = new Y.Doc();
 
-        resetLastExpressions();
-    }
+        const urlSearchParams = new URLSearchParams(location.search);
+        const roomId = urlSearchParams.has("id") ? urlSearchParams.get("id") : makeId(6);
 
-    function onRemoveState(expression: ExpressionState) {
-        // If this is our expression coming back in,
-        // then it must have our prefix attached to it's
-        // id. If that is the case, then remove the prefix
-        // because our local copy of our own expressions
-        // do not contain the prefix.
-        expression.id = removePrefix(expression.id, clientTag);
+        inviteLink = `${window.location.toString().split("?")[0]}?id=${roomId}`;
+        
+        const provider = new WebrtcProvider(`desmos-${roomId}`, ydoc, {
+            signaling: [ "wss://signal-us-east-1d.xacer.dev:443" ]
+        });
 
-        calculator.removeExpression({ id: expression.id || "" });
+        provider.awareness.setLocalStateField("user", localMeta);
 
-        resetLastExpressions();
-    }
+        provider.connect();
 
-    function onReset(expressions: ExpressionState[]) {
-        calculator.clearHistory();
-        calculator.removeExpressions(calculator.getExpressions().map(e => {
-            return { id: e.id as string };
-        }));
-        calculator.setExpressions(expressions);
+        provider.awareness.on('change', () => {
+            nameStore.update(_ => Array.from(provider.awareness.getStates().values()).map(u => u.user).slice(1) as UserMetadata[]);
+        });
+        
+        const yarr = ydoc.getArray<ExpressionState>("equations");
+        const userSelections = ydoc.getMap<number>("selections");
+        const userSelectionNodes = new Map<string, HTMLElement>();
 
-        resetLastExpressions();
-    }
+        userSelections.observe(_ => {
+            // Grab all user states
+            const statesIter = provider
+                .awareness
+                .getStates()
+                .values() as IterableIterator<{ user: UserMetadata }>;
 
-    onMount(() => {
+            // Transform into array
+            for (let { user: meta } of statesIter) {
+                // Skip the userId
+                if (meta.userId == localMeta.userId) continue;
 
-        // Initialize the calculator
-        // TODO: Be more precise with what is allowed/not allowed
+                let index = userSelections.get(meta.userId);
+
+                if (index !== undefined && index >= 0) {
+
+                    // Create widget if it doesn't exist
+                    if (!userSelectionNodes.has(meta.userId)) {
+                        const node = document.getElementById(`icon-${meta.userId}`)?.cloneNode() as HTMLElement;
+                        userSelectionNodes.set(meta.userId, node);
+                    }
+
+                    let node = userSelectionNodes.get(meta.userId) as HTMLElement;
+
+                    // Show widget
+                    node.style.setProperty("display", "block");
+                    
+                    // Find box and add the node to the box
+                    // NOTE: Calling appendChild when "node"
+                    // is already a child simply removed
+                    // "node" from it's original parents
+                    // and adds it to the new parents.
+                    let box = Array.from(
+                        document.getElementsByClassName("dcg-expressionitem")
+                    )[index];
+                    
+                    box.appendChild(node);
+
+                } else {
+                    // Hide widget, if it exists
+                    userSelectionNodes
+                        .get(meta.userId)?.style
+                        .setProperty("display", "none");
+                }
+            }
+        });
+
         calculator = Desmos.GraphingCalculator(divEle, {
             autosize: true,
             images: false,
             folders: false,
-            projectorMode: false,
-            notes: true
+            expressions: true,
+            trace: true
         });
 
-        resetLastExpressions();
+        // calculator.observe("selectedExpressionId", console.log);
 
-        // This is the polling interval
-        // that checks for updates in the state
-        // of the local graph.
-        setInterval(() => {
+        let pastExpressions = calculator.getExpressions();
 
-            /**
-             * Compute a new expression check
-             */
-            let newExpressions = calculator.getExpressions();
+        yarr.observe(() => {
 
-            /**
-             * Computed expressions that appeared in the new check
-             * but were not in the old check.
-             */
-            let addedExpressions = newExpressions.filter(u => {
-                return !lastExpressions.find(v => objectEquals(v, u));
+            let newExpressions = yarr.toArray();
+            let curExpressions = calculator.getExpressions();
+
+            if (areExpressionsEqual(pastExpressions, newExpressions)) {
+                return;
+            }
+
+            // delete removed expressions
+            calculator.removeExpressions(curExpressions.filter(u => {
+                return !newExpressions.find(v => v.id == u.id);
+            }).map(e => {
+                console.log("Removing ", e.id);
+                return { id: e.id as string };
+            }));
+
+            newExpressions.forEach(newExpression => {
+                calculator.setExpression(newExpression);
+            });
+            
+            // go through each expression:
+            let currentExpressions = calculator.getExpressions();
+            let shouldReorder = newExpressions.some((expr, index) => {
+                return currentExpressions[index].id != expr.id
             });
 
-            /**
-             * Computed expressions that do not appear in the new check
-             * but did appear in the old check.
-             */
-            let removedExpressions = lastExpressions.filter(u => {
-                return !newExpressions.find(v => objectEquals(v, u)) && !addedExpressions.find(v => v.id == u.id);
-            });
+            // only if we need to re-order
+            // so far this is the only way I've found
+            // since Desmos API doesn't care about order
+            if (shouldReorder) {
+                console.log("Reordering...");
+                calculator.setBlank({ allowUndo: true });
+                calculator.setExpressions(newExpressions);
+            }
 
-            // Send a DesmosUpdate for each added expression
-            // NOTE: There SHOULD only be one added expression,
-            //       but some cases, such as adding a bunch of
-            //       sliders at once, multiple DesmosUpdate's
-            //       will be sent.
-            addedExpressions.forEach(expression => {
+            // update cache
+            pastExpressions = newExpressions;
+        });
 
-                // If this is one of our expressions,
-                // meaning it does not contain a prefix
-                // then add our prefix before sending it out
-                expression.id = addPrefix(expression.id, clientTag);
-
-                networker.broadcast<DesmosUpdate>(
-                    withId("desmos-add-state"), 
-                    expression
-                );
-            });
-
-            // Send a DesmosUpdate for each removed expression
-            // NOTE: There SHOULD only be one removed expression
-            //       but some cases, such as deleting a bunch
-            //       of blank lines at once, multiple
-            //       DesmosUpdate's are sent.
-            removedExpressions.forEach(expression => {
-
-                // If this is one of our expressions,
-                // meaning it does not contain a prefix
-                // then add our prefix before sending it out
-                expression.id = addPrefix(expression.id, clientTag);
-
-                networker.broadcast<DesmosUpdate>(
-                    withId("desmos-remove-state"), 
-                    expression
-                );
-            });
-
-            // Update the expression cache
-            // so differences are not counted twice
-            resetLastExpressions();
-        }, 100);
-    });
-    
-
-    // Add the handlers to the networker
-    networker.addGlobalHandler<DesmosUpdate>(withId("desmos-add-state"), onAddState);
-    networker.addGlobalHandler<DesmosUpdate>(withId("desmos-remove-state"), onRemoveState);
-    networker.addGlobalHandler<DesmosReset>(withId("desmos-reset"), onReset);
-
-    let lastList = new Array<string>();
-    networker.usePeerList().subscribe(newList => {
-        console.log(newList);
-        let uniqueIds = newList.filter(peerId => lastList.indexOf(peerId) == -1);
-
-        if (uniqueIds.length > 0 && calculator) {
-            networker.broadcastLimited<DesmosReset>(
-                withId("desmos-reset"), 
-                calculator.getExpressions(), 
-                uniqueIds
-            );
+        function getSelectedIndex() {
+            const allEquations = Array.from(document.getElementsByClassName("dcg-expressionitem"));
+            const selected = allEquations.findIndex(div => div.classList.contains("dcg-selected"));            
+            return selected;
         }
 
-        lastList = newList;
-    });
 
-    // If the component is for some reason
-    // removed from the tree, remove its event handlers
-    onDestroy(() => {
-        networker.removeGlobalHandler<DesmosUpdate>(withId("desmos-add-state"), onAddState);
-        networker.removeGlobalHandler<DesmosUpdate>(withId("desmos-remove-state"), onRemoveState);
-    });
+        setInterval(() => {
+            let selected = getSelectedIndex();
+            let lastIndex = userSelections.get(localMeta.userId);
+            if (lastIndex != selected) userSelections.set(localMeta.userId, selected);
+        }, 1000 / 10);
 
-    /**
-     * Create a cache to avoid computing the output for two identical inputs
-     * @param f The function to memoize
-     */
-    function memoize<T, K>(f: (a: T) => K) {
-        let mem = new Map<T, K>();
-        return (a: T) => {
-            if (mem.has(a)) return mem.get(a);
-            let value = f(a);
-            mem.set(a, value);
-            return value;
-        };
-    }
+        setInterval(() => {
+            let newExpressions = calculator.getExpressions();
 
-    /**
-     * A memoized version of JSON.stringify
-     */
-    const stringify = memoize(JSON.stringify);
+            if (!areExpressionsEqual(newExpressions, pastExpressions)) {
+                // encode document as single update
+                // TODO: ensure that the transaction only
+                // encodes the differences
+                pastExpressions = newExpressions;
+                ydoc.transact(() => {
+                    yarr.delete(0, yarr.length);
+                    yarr.insert(0, newExpressions);
+                });
+            }
 
-    /**
-     * Use JSON.stringify to determine if two objects are equal
-     * @param a - The first object
-     * @param b - The second object
-     */
-    function objectEquals(a: any, b: any) {
-        return stringify(a) == stringify(b);
-    }
-
-    /**
-     * Set the `lastExpressions` variable to the latest
-     * expressions in the calculator.
-     */
-    function resetLastExpressions() {
-        lastExpressions = calculator.getExpressions();
-    }
-
-    /**
-     * Remove a prefix if it exists, otherwise do nothing
-     * @param full - The full string
-     * @param prefix - The prefix to remove
-     * @returns The full string without the prefix
-     */
-    function removePrefix(full: string | undefined, prefix: string) {
-        return full?.startsWith(prefix) ? full.replace(prefix, "") : full;
-    }
-
-    /**
-     * Add a prefix if no prefix exists, otherwise do nothing
-     * @param full - The full string
-     * @param prefix - The prefix to remove
-     * @returns The full string with the prefix added
-     */
-    function addPrefix(full: string | undefined, prefix: string) {
-        return full?.indexOf("___") == -1 ? prefix + full : full;
-    }
-
-    export function setExpressions (expressions: ExpressionState[]) {
-        calculator.setExpressions(expressions);
+        }, 1000 / POLL_HZ);
     }
 
 </script>
 
+<svelte:head>
+    <script 
+        src="https://www.desmos.com/api/v1.8/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"
+        on:load={start}
+    ></script>
+</svelte:head>
 
-<div 
-    bind:this={divEle} 
-    style:width="100vw" 
-    style:height="100vh" 
-/>
+<main>
+    <!-- Top bar -->
+    <section>
+        
+        <span 
+            class="color-icon yours" 
+            style:background-image="url({localMeta.imageUrl})"
+            style:border-color="{localMeta.colorGroup.color}"
+        />
+        
+        {#each $nameStore as meta}
+            <span 
+                class="color-icon" 
+                style:background-image="url({meta.imageUrl})"
+                style:border-color="{meta.colorGroup.color}"
+            />
+        {/each}
+
+        {#if inviteLink}
+            <button class="invite-link" on:click={()=>window.navigator.clipboard.writeText(inviteLink)}>
+                Copy Invite<br>Link
+            </button>
+        {/if}
+
+    </section>
+
+    <!-- Desmos graph container -->
+    <div
+        id="desmos-graph"
+        bind:this={divEle}
+    />
+</main>
+
+{#each $nameStore as meta}
+    <span 
+        class="color-icon movable"
+        id="icon-{meta.userId}"
+        style:background-image="url({meta.imageUrl})"
+        style:border-color="{meta.colorGroup.color}"
+        style:display="none"
+    />
+{/each}
+
 
 <style>
-    /* Keep this Demsos graph fixed - we might have other HTML elements on top of it */
-    div {
-        top: 0;
-        left: 0;
-        position: fixed;
+    main {
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: auto;
+        grid-template-rows: 65px auto;
+        position: absolute;
+        width: 100vw;
+        height: 100vh;
+    }
+    
+    section {
+        grid-row: 1;
+        background-color: rgb(42, 42, 42);
+        display: flex;
+        place-items: center;
+        padding-left: 15px;
+    }
+
+    #desmos-graph {
+        grid-row: 2;
+        width: 100%;
+        height: 100%;
+    }
+
+    .color-icon {
+        width: 45px;
+        height: 45px;
+        padding: 0;
+        margin-right: 5px;
+        margin-left: 5px;
+        border: 5px solid red;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: cover;
+        border-radius: 50%;
+    }
+
+    .movable {
+        position: absolute;
+        right: 0px;
+        top: 0px;
+        z-index: 10;
+        display: hidden;
+        pointer-events: none;
+    }
+
+    .yours {
+        margin-right: 10px;
+    }
+
+    .invite-link {
+        color: white;
+        right: 5px;
+    }
+    
+    span {
+        padding: 5px;
+        display: inline-block;
+    }
+
+    button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        border: 1px solid red;
+        position: absolute;
+        float: right;
+        height: 100%;
     }
 </style>
 

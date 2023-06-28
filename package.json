@@ -1,5 +1,5 @@
 {
-	"name": "classroom3d",
+	"name": "multiplayer-desmos",
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
@@ -24,6 +24,7 @@
 	"type": "module",
 	"dependencies": {
 		"desmos": "^1.5.4",
-		"peerjs": "^1.4.7"
+		"y-webrtc": "^10.2.5",
+		"yjs": "^13.6.5"
 	}
 }
