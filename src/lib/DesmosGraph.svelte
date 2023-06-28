@@ -127,7 +127,9 @@
                 calculator.setExpression({
                     id: newId.toString(),
                     type: "expression",
-                    latex: " "
+                    latex: " " // <-- add a space to not count the cell as "empty"
+                               //     The space doesn't display on Desmos so
+                               // the user interface remains the same
                 });
                 // Select last expression
                 setTimeout(() => {
