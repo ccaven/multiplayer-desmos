@@ -8,7 +8,7 @@
     import * as Y from 'yjs';
     import { WebrtcProvider } from 'y-webrtc';
     import { makeId, objectEquals, createUserMetadata, areExpressionsEqual } from './helper';
-    import { writable } from 'svelte/store';
+    import { writable, type Writable } from 'svelte/store';
 
     type UserMetadata = ReturnType<typeof createUserMetadata>;
 
@@ -19,12 +19,22 @@
 
     let calculator: Calculator;
     let divEle: HTMLDivElement;
+    let grapherDivEle: HTMLDivElement;
 
     let localMeta = createUserMetadata();
 
     let inviteLink: string;
 
     let nameStore = writable<UserMetadata[]>([]);
+
+    type RemoteMouse = {
+        x: number, y: number, in: boolean, userId: string
+    };
+    type RemoteMouseDisplay = {
+        x: Writable<number>, y: Writable<number>, size: Writable<number>
+    };
+
+    let remoteMousePositions = writable<RemoteMouse[]>([]);
 
     const start = () => {
 
@@ -41,10 +51,51 @@
 
         provider.awareness.setLocalStateField("user", localMeta);
 
+        provider.awareness.setLocalStateField("mouse-x", 0);
+        provider.awareness.setLocalStateField("mouse-y", 0);
+        provider.awareness.setLocalStateField("mouse-in", false);
+
         provider.connect();
 
-        provider.awareness.on('change', () => {
-            nameStore.update(_ => Array.from(provider.awareness.getStates().values()).map(u => u.user).slice(1) as UserMetadata[]);
+        type ProviderAwarenessUpdate = {
+            added: any[],
+            updated: any[],
+            removed: any[]
+        };
+
+        // !!!!
+        // TODO
+        // Check changes: If changes were made to the "user" field, do that
+        // If changes were made to the "mouse-in" or "mouse-pos" field, do that
+        provider.awareness.on('change', ({ added, updated, removed }: ProviderAwarenessUpdate) => {
+            //console.log(added, updated, removed);
+            const users = Array.from(provider.awareness.getStates().values());
+
+            nameStore.update(_ => users.map(u => u.user).slice(1) as UserMetadata[]);
+
+            // Update remoteMousePositions
+
+            remoteMousePositions.update(() => {
+                let info: RemoteMouse[] = [];
+
+                users.forEach(u => {
+
+                    if (u.user.userId == localMeta.userId) return;
+                    
+                    info.push({
+                        x: u["mouse-x"],
+                        y: u["mouse-y"],
+                        in: u["mouse-in"],
+                        userId: u["user"]["userId"]
+                    }); 
+
+                });
+
+                return info;
+            });
+
+            
+        
         });
         
         const yarr = ydoc.getArray<ExpressionState>("equations");
@@ -105,6 +156,31 @@
             expressions: true,
             trace: true
         });
+
+        // Add mouse events
+        setTimeout(() => {
+            grapherDivEle = divEle.getElementsByClassName("dcg-grapher").item(0) as HTMLDivElement;
+            grapherDivEle.addEventListener("mouseenter", () => {;
+                provider.awareness.setLocalStateField("mouse-in", true);
+            });
+            grapherDivEle.addEventListener("mouseleave", () => {
+                provider.awareness.setLocalStateField("mouse-in", false);
+            });
+            grapherDivEle.addEventListener("mousemove", event => {
+                if (divEle == null) return;
+
+                let clientBoundingRect = divEle.getBoundingClientRect();
+
+                // Check if mouse is inside canvas
+                let mathPos = calculator.pixelsToMath({
+                    x: event.pageX - clientBoundingRect.left,
+                    y: event.pageY - clientBoundingRect.top
+                });
+
+                provider.awareness.setLocalStateField("mouse-x", mathPos.x);
+                provider.awareness.setLocalStateField("mouse-y", mathPos.y);
+            });
+        }, 100);
 
         // !!!
         // Here, we fix the Desmos bug: "expression with id [id] already exists"
@@ -225,6 +301,43 @@
         }, 1000 / POLL_HZ);
     }
 
+    let sizeCache = new Map<string, number>();
+    function mathToCSSTransform(coord: RemoteMouse) {
+        if (!grapherDivEle) return "";
+        let pix = calculator.mathToPixels(coord);
+        let doff = divEle.getBoundingClientRect();
+        let off = grapherDivEle.getBoundingClientRect();
+
+        if (pix.x < off.left) pix.x = off.left;
+        if (pix.y < 0) pix.y = 0;
+        if (pix.x > off.right) pix.x = off.right;
+        if (pix.y > off.top + off.height) pix.y = off.top + off.height;
+
+        let x = pix.x - 10;
+        let y = pix.y + doff.top - 10;
+
+        if (!sizeCache.has(coord.userId)) sizeCache.set(coord.userId, 0);
+
+        let s = sizeCache.get(coord.userId) as number;
+
+        if (coord.in) {
+            s += (100 - s) * 0.1;
+            sizeCache.set(coord.userId, s);
+        } else {
+            s = 0;
+            sizeCache.set(coord.userId, s);
+        }
+
+        return `translate(${x}px, ${y}px) scale(${s}%)`;
+    }
+
+    // function mathToPixels(userId: string): string {
+    //     if (calculator) {
+    //         return "translate(50%, 50%);"
+    //     }
+    //     return "";
+    // }
+
 </script>
 
 <svelte:head>
@@ -265,6 +378,7 @@
                     style:padding="5px"
                     style:border="1px solid gray"
                     style:font-family="Courier New"
+                    id="invite-link"
                     on:click={event=>{
                         let ele = event.target;
                         // @ts-ignore
@@ -318,7 +432,22 @@
             Icons8
         </a>
     </div>
-    
+
+    {#each $remoteMousePositions as pos}
+        <div
+            style:position="absolute"
+            style:top=0
+            style:left=0
+            style:width="20px"
+            style:height="20px"
+            style:background-color={"red"}
+            style:border-radius="10px"
+            style:transform={mathToCSSTransform(pos)}
+            style:pointer-events="none"
+        />
+    {/each}
+
+
 </main>
 
 {#each $nameStore as meta}
