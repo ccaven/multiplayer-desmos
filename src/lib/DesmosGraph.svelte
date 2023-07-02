@@ -350,7 +350,7 @@
 <main>
     <!-- Top bar -->
     <section>
-        <img src="icons8-desmos-200.png" height="65px" alt="Desmos icon by Icons8">
+        <img src={(process.env.NODE_ENV === "production" ? "/multiplayer-desmos" : "") +"/icons8-desmos-200.png"} height="65px" alt="Desmos icon by Icons8">
         
         <span 
             class="color-icon yours" 
