@@ -9,6 +9,7 @@
     import { WebrtcProvider } from 'y-webrtc';
     import { makeId, objectEquals, createUserMetadata, areExpressionsEqual } from './helper';
     import { writable, type Writable } from 'svelte/store';
+    import Invite from './Invite.svelte';
 
     type UserMetadata = ReturnType<typeof createUserMetadata>;
 
@@ -53,7 +54,7 @@
 
         provider.awareness.setLocalStateField("mouse-x", 0);
         provider.awareness.setLocalStateField("mouse-y", 0);
-        provider.awareness.setLocalStateField("mouse-in", false);
+        provider.awareness.setLocalStateField("mouse-in", true);
 
         provider.connect();
 
@@ -382,36 +383,56 @@
             />
         {/each}
 
-        {#if inviteLink}
-            <button 
-                class="invite-link" 
-                style:place-items="center"
-                style:display="flex"
-                style:justify-content="center"
-                
-            >
-                <p
-                    style:padding="5px"
-                    style:border="1px solid gray"
-                    style:font-family="Courier New"
-                    id="invite-link"
-                    on:click={event=>{
-                        let ele = event.target;
+        <Invite url={inviteLink}/>
+        
+        <!--<img 
+            src="send-icon-2.png" 
+            alt="" 
+            height="35px"
+            style:filter="invert()"
+            style:position="relative"
+            style:right="5px"
+            style:margin-left="8px"
+            style:border="2px solid black"
+            style:padding="5px"
+            style:border-radius="10px"
+            style:cursor="pointer"
+            on:click={() => {
+                // Show modal
+                alert(inviteLink)
+            }}
+            on:keydown={()=>{}}
+        />-->
+
+
+        <!--
+        <button 
+            class="invite-link" 
+            style:place-items="center"
+            style:display="flex"
+            style:justify-content="center"
+        >
+            <p
+                style:padding="5px"
+                style:border="1px solid gray"
+                style:font-family="Courier New"
+                id="invite-link"
+                on:click={event=>{
+                    let ele = event.target;
+                    // @ts-ignore
+                    ele.style.backgroundColor = "green";
+                    setTimeout(() => {
                         // @ts-ignore
-                        ele.style.backgroundColor = "green";
-                        setTimeout(() => {
-                            // @ts-ignore
-                            ele.style.backgroundColor = "";
-                        }, 200);
-                        window.navigator.clipboard.writeText(inviteLink)
-                    }}
-                    on:keydown={()=>{}}
-                >
-                    {inviteLink}
-                </p>
-            </button>
-            
-        {/if}
+                        ele.style.backgroundColor = "";
+                    }, 200);
+                    window.navigator.clipboard.writeText(inviteLink)
+                }}
+                on:keydown={()=>{}}
+            >
+                {inviteLink}
+            </p>
+        </button>
+        -->
 
         
 
