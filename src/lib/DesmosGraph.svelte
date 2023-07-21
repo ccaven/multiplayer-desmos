@@ -28,7 +28,7 @@
     let nameStore = writable<UserMetadata[]>([]);
 
     type RemoteMouse = {
-        x: number, y: number, in: boolean, userId: string
+        x: number, y: number, in: boolean, userId: string, color: string, highlight: string
     };
     type RemoteMouseDisplay = {
         x: Writable<number>, y: Writable<number>, size: Writable<number>
@@ -69,7 +69,12 @@
         // If changes were made to the "mouse-in" or "mouse-pos" field, do that
         provider.awareness.on('change', ({ added, updated, removed }: ProviderAwarenessUpdate) => {
             //console.log(added, updated, removed);
-            const users = Array.from(provider.awareness.getStates().values());
+            const users = Array.from(provider.awareness.getStates().values()) as {
+                user: UserMetadata,
+                "mouse-x": number,
+                "mouse-y": number,
+                "mouse-in": boolean
+            }[];
 
             nameStore.update(_ => users.map(u => u.user).slice(1) as UserMetadata[]);
 
@@ -78,15 +83,18 @@
             remoteMousePositions.update(() => {
                 let info: RemoteMouse[] = [];
 
-                users.forEach(u => {
+                users.forEach((u) => {
 
-                    if (u.user.userId == localMeta.userId) return;
-                    
+                    //if (u.user.userId == localMeta.userId) return;
+
+
                     info.push({
                         x: u["mouse-x"],
                         y: u["mouse-y"],
                         in: u["mouse-in"],
-                        userId: u["user"]["userId"]
+                        userId: u["user"]["userId"],
+                        color: u["user"]["colorGroup"]["color"],
+                        highlight: u["user"]["colorGroup"]["light"]
                     }); 
 
                 });
@@ -310,11 +318,11 @@
 
         if (pix.x < off.left) pix.x = off.left;
         if (pix.y < 0) pix.y = 0;
-        if (pix.x > off.right) pix.x = off.right;
-        if (pix.y > off.top + off.height) pix.y = off.top + off.height;
+        if (pix.x > off.right - 10) pix.x = off.right - 10;
+        if (pix.y > off.top + off.height - 10) pix.y = off.top + off.height - 10;
 
-        let x = pix.x - 10;
-        let y = pix.y + doff.top - 10;
+        let x = pix.x;
+        let y = pix.y + doff.top;
 
         if (!sizeCache.has(coord.userId)) sizeCache.set(coord.userId, 0);
 
@@ -356,6 +364,14 @@
             class="color-icon yours" 
             style:background-image="url({localMeta.imageUrl})"
             style:border-color="{localMeta.colorGroup.color}"
+        />
+
+        <div
+            style:width="2px"
+            style:height="40px"
+            style:border-radius="0px"
+            style:background-color="white"
+            style:margin-right="10px"
         />
         
         {#each $nameStore as meta}
@@ -434,17 +450,25 @@
     </div>
 
     {#each $remoteMousePositions as pos}
-        <div
+        <svg
             style:position="absolute"
             style:top=0
             style:left=0
-            style:width="20px"
-            style:height="20px"
-            style:background-color={"red"}
-            style:border-radius="10px"
             style:transform={mathToCSSTransform(pos)}
             style:pointer-events="none"
-        />
+            width="20px"
+            height="20px"
+        >
+            <!--<circle cx="10" cy="10" r="10" fill={pos.color}/>-->
+            
+            <polygon 
+                points="0,0 15,5 12,8 20,18 18,20 8,12 5,15" 
+                fill={pos.color}
+                stroke="black"
+                stroke-width="2px"
+                opacity="0.5"
+            />
+        </svg>
     {/each}
 
 
@@ -532,6 +556,10 @@
         float: right;
         height: 100%;
         transition: 0.1s ease;
+    }
+
+    :global(.dcg-graph-outer) {
+        cursor: none;
     }
 
     /*
