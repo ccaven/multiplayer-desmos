@@ -4,6 +4,7 @@
     let activated: boolean = false;
 </script>
 
+<!-- NOTE: the colors are weird because we apply "filter:invert()" -->
 <img 
     src="send-icon-2.png" 
     alt="" 
@@ -11,7 +12,8 @@
     style:filter="invert()"
     style:position="relative"
     style:right="5px"
-    style:margin-left="8px"
+    style:margin-left="5px"
+    style:margin-right="5px"
     style:border="2px solid black"
     style:padding="5px"
     style:border-radius="10px"
@@ -23,7 +25,7 @@
     on:keydown={()=>{}}
 />
 
-    <!-- Background -->
+<!-- Background -->
 <div
     style:position="absolute"
     style:top="0px"
@@ -46,12 +48,12 @@
         style:padding="20px"
         style:color="white"
         style:display="inline"
-        style:font-family="sans serif"
+        style:font-family="sans-serif"
         style:font-size="1.2em"
         style:box-shadow="0px 0px 15px gray"
     >
         <p>
-            Click to copy the link:
+            Click to copy your personalized invite link:
             <span
                 style:font-family="Courier New"
                 style:border="1px solid white"
@@ -68,6 +70,4 @@
             </span>
         </p>
     </div>
-
-
 </div>

@@ -31,9 +31,6 @@
     type RemoteMouse = {
         x: number, y: number, in: boolean, userId: string, color: string, highlight: string
     };
-    type RemoteMouseDisplay = {
-        x: Writable<number>, y: Writable<number>, size: Writable<number>
-    };
 
     let remoteMousePositions = writable<RemoteMouse[]>([]);
 
@@ -58,18 +55,8 @@
 
         provider.connect();
 
-        type ProviderAwarenessUpdate = {
-            added: any[],
-            updated: any[],
-            removed: any[]
-        };
+        provider.awareness.on('change', () => {
 
-        // !!!!
-        // TODO
-        // Check changes: If changes were made to the "user" field, do that
-        // If changes were made to the "mouse-in" or "mouse-pos" field, do that
-        provider.awareness.on('change', ({ added, updated, removed }: ProviderAwarenessUpdate) => {
-            //console.log(added, updated, removed);
             const users = Array.from(provider.awareness.getStates().values()) as {
                 user: UserMetadata,
                 "mouse-x": number,
@@ -79,31 +66,14 @@
 
             nameStore.update(_ => users.map(u => u.user).slice(1) as UserMetadata[]);
 
-            // Update remoteMousePositions
-
-            remoteMousePositions.update(() => {
-                let info: RemoteMouse[] = [];
-
-                users.forEach((u) => {
-
-                    //if (u.user.userId == localMeta.userId) return;
-
-
-                    info.push({
-                        x: u["mouse-x"],
-                        y: u["mouse-y"],
-                        in: u["mouse-in"],
-                        userId: u["user"]["userId"],
-                        color: u["user"]["colorGroup"]["color"],
-                        highlight: u["user"]["colorGroup"]["light"]
-                    }); 
-
-                });
-
-                return info;
-            });
-
-            
+            remoteMousePositions.update(_ => users.map(u => ({
+                x: u["mouse-x"],
+                y: u["mouse-y"],
+                in: u["mouse-in"],
+                userId: u["user"]["userId"],
+                color: u["user"]["colorGroup"]["color"],
+                highlight: u["user"]["colorGroup"]["light"]
+            })));           
         
         });
         
@@ -166,7 +136,10 @@
             trace: true
         });
 
-        // Add mouse events
+        /** 
+         * @todo: figure out how to do this outside of setTimeout.
+         *        We need to wait for the DOM to reload
+         */
         setTimeout(() => {
             grapherDivEle = divEle.getElementsByClassName("dcg-grapher").item(0) as HTMLDivElement;
             grapherDivEle.addEventListener("mouseenter", () => {;
@@ -372,7 +345,8 @@
             style:height="40px"
             style:border-radius="0px"
             style:background-color="white"
-            style:margin-right="10px"
+            style:margin-right="15px"
+            style:margin-left="5px"
         />
         
         {#each $nameStore as meta}
@@ -558,26 +532,12 @@
     .yours {
         margin-right: 10px;
     }
-
-    .invite-link {
-        color: white;
-        right: 5px;
-    }
     
     span {
         padding: 5px;
         display: inline-block;
     }
 
-    button {
-        background: none;
-        border: none;
-        cursor: pointer;
-        position: absolute;
-        float: right;
-        height: 100%;
-        transition: 0.1s ease;
-    }
 
     :global(.dcg-graph-outer) {
         cursor: none;
