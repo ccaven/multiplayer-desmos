@@ -82,8 +82,6 @@ export function createUserMetadata() {
     //     { color: '#1be7ff', light: '#1be7ff' }
     // ]
 
-    const urlPrefix = process.env.NODE_ENV === "production" ? "multiplayer-desmos/" : "";
-
     const imageUrls = [
         "animals/armadillo_1.png",
         "animals/capy_1.png",
@@ -117,7 +115,7 @@ export function createUserMetadata() {
     ]
 
     const colorGroup = colorGroups[Math.random() * colorGroups.length | 0];
-    const imageUrl = urlPrefix + imageUrls[Math.random() * imageUrls.length | 0];
+    const imageUrl = imageUrls[Math.random() * imageUrls.length | 0];
 
     const userId = makeId(8);
 
