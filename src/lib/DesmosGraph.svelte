@@ -3,12 +3,10 @@
     // TODO:
     // - Allow annotatons
     // - Style button link
-
-    import { onMount } from 'svelte';
     import * as Y from 'yjs';
     import { WebrtcProvider } from 'y-webrtc';
-    import { makeId, objectEquals, createUserMetadata, areExpressionsEqual } from './helper';
-    import { writable, type Writable } from 'svelte/store';
+    import { makeId, createUserMetadata, areExpressionsEqual } from './helper';
+    import { writable } from 'svelte/store';
     import Invite from './Invite.svelte';
 
     type UserMetadata = ReturnType<typeof createUserMetadata>;
@@ -29,7 +27,9 @@
     let nameStore = writable<UserMetadata[]>([]);
 
     type RemoteMouse = {
-        x: number, y: number, in: boolean, userId: string, color: string, highlight: string
+        x: number, y: number, 
+        in: boolean, userId: string, 
+        color: string, highlight: string
     };
 
     let remoteMousePositions = writable<RemoteMouse[]>([]);
@@ -312,14 +312,6 @@
 
         return `translate(${x}px, ${y}px) scale(${s}%)`;
     }
-
-    // function mathToPixels(userId: string): string {
-    //     if (calculator) {
-    //         return "translate(50%, 50%);"
-    //     }
-    //     return "";
-    // }
-
 </script>
 
 <svelte:head>
@@ -329,225 +321,113 @@
     ></script>
 </svelte:head>
 
-<main>
+<div class="
+    overflow-hidden w-screen h-screen absolute 
+    grid grid-cols-1 grid-rows-[auto_1fr]
+">
     <!-- Top bar -->
-    <section>
-        <img src="/icons8-desmos-200.png" height="65px" alt="Desmos icon by Icons8">
+    <div class="
+        h-20 overflow-hidden row-span-1 p-0 
+        bg-gray-800 flex place-items-center pl-2
+    ">
+        <a href="/" target="_blank">
+            <img 
+                src="/icons8-desmos-200.png" 
+                class="h-20 m-0" 
+                alt="Desmos icon by Icons8"
+            >
+        </a>
         
         <span 
-            class="color-icon yours" 
+            class="
+                w-16 h-16 p-0 mr-2 ml-2 
+                bg-center bg-no-repeat bg-cover 
+                rounded-full border-4
+            " 
             style:background-image="url({localMeta.imageUrl})"
             style:border-color="{localMeta.colorGroup.color}"
         />
 
         <div
-            style:width="2px"
-            style:height="40px"
-            style:border-radius="0px"
-            style:background-color="white"
-            style:margin-right="15px"
-            style:margin-left="5px"
+            class="w-1 h-16 bg-white mr-2 ml-2"
         />
         
         {#each $nameStore as meta}
-            <span 
-                class="color-icon" 
+            <span
+                class="
+                    w-16 h-16 p-0 mr-2 ml-2 
+                    bg-center bg-no-repeat bg-cover 
+                    rounded-full border-4
+                "
                 style:background-image="url({meta.imageUrl})"
                 style:border-color="{meta.colorGroup.color}"
             />
         {/each}
 
-        <Invite url={inviteLink}/>
-        
-        <!--<img 
-            src="send-icon-2.png" 
-            alt="" 
-            height="35px"
-            style:filter="invert()"
-            style:position="relative"
-            style:right="5px"
-            style:margin-left="8px"
-            style:border="2px solid black"
-            style:padding="5px"
-            style:border-radius="10px"
-            style:cursor="pointer"
-            on:click={() => {
-                // Show modal
-                alert(inviteLink)
-            }}
-            on:keydown={()=>{}}
-        />-->
+        <Invite url={inviteLink}/>        
 
-
-        <!--
-        <button 
-            class="invite-link" 
-            style:place-items="center"
-            style:display="flex"
-            style:justify-content="center"
-        >
-            <p
-                style:padding="5px"
-                style:border="1px solid gray"
-                style:font-family="Courier New"
-                id="invite-link"
-                on:click={event=>{
-                    let ele = event.target;
-                    // @ts-ignore
-                    ele.style.backgroundColor = "green";
-                    setTimeout(() => {
-                        // @ts-ignore
-                        ele.style.backgroundColor = "";
-                    }, 200);
-                    window.navigator.clipboard.writeText(inviteLink)
-                }}
-                on:keydown={()=>{}}
-            >
-                {inviteLink}
-            </p>
-        </button>
-        -->
-
-        
-
-    </section>
+    </div>
 
     <!-- Desmos graph container -->
     <div
-        id="desmos-graph"
+        class="row-span-1 w-full h-full"
         bind:this={divEle}
     />
 
-    <div 
-        style:position="absolute"
-        style:right="10px"
-        style:bottom="10px"
-        style:font-family="sans serif"
-        style:color="gray"
+</div>
+
+<div 
+    class="absolute right-2 bottom-2 text-gray-700 text-sm"
+>
+    <a 
+        class="text-green-600"
+        target="_blank" 
+        href="https://icons8.com/icon/kFcdher8hXQj/desmos"
     >
-        <a 
-            target="_blank" 
-            href="https://icons8.com/icon/kFcdher8hXQj/desmos"
-            style:text-decoration="none"
-            style:color="green"
-        >
-            Desmos
-        </a> 
-        icon by 
-        <a 
-            target="_blank" 
-            href="https://icons8.com"
-            style:text-decoration="none"
-            style:color="green"
-        >
-            Icons8
-        </a>
-    </div>
+        Desmos
+    </a> 
+    icon by 
+    <a 
+        class="text-green-600"
+        target="_blank" 
+        href="https://icons8.com"
+    >
+        Icons8
+    </a>
+</div>
 
-    {#each $remoteMousePositions as pos}
-        <svg
-            style:position="absolute"
-            style:top=0
-            style:left=0
-            style:transform={mathToCSSTransform(pos)}
-            style:pointer-events="none"
-            width="20px"
-            height="20px"
-        >
-            <!--<circle cx="10" cy="10" r="10" fill={pos.color}/>-->
-            
-            <polygon 
-                points="0,0 15,5 12,8 20,18 18,20 8,12 5,15" 
-                fill={pos.color}
-                stroke="black"
-                stroke-width="2px"
-                opacity="0.5"
-            />
-        </svg>
-    {/each}
-
-
-</main>
+{#each $remoteMousePositions as pos}
+    <svg
+        class="absolute top-0 left-0 w-8 h-8 pointer-events-none"
+        style:transform={mathToCSSTransform(pos)}
+    >
+        <polygon 
+            points="0,0 15,5 12,8 20,18 18,20 8,12 5,15" 
+            fill={pos.color}
+            stroke="black"
+            stroke-width="2px"
+            opacity="0.5"
+        />
+    </svg>
+{/each}
 
 {#each $nameStore as meta}
     <span 
-        class="color-icon movable"
+        class="
+            absolute right-4 top-1 w-12 h-12 p-0 mr-2 ml-5 
+            border-2 bg-no-repeat bg-center bg-cover rounded-full 
+            hidden pointer-events-none
+        "
         id="icon-{meta.userId}"
         style:background-image="url({meta.imageUrl})"
         style:border-color="{meta.colorGroup.color}"
-        style:display="none"
     />
 {/each}
 
 
 <style>
-    main {
-        overflow: hidden;
-        display: grid;
-        grid-template-columns: auto;
-        grid-template-rows: 65px auto;
-        position: absolute;
-        width: 100vw;
-        height: 100vh;
-
-        font-family: sans-serif;
-    }
-    
-    section {
-        grid-row: 1;
-        background-color: rgb(42, 42, 42);
-        display: flex;
-        place-items: center;
-        padding-left: 15px;
-    }
-
-    #desmos-graph {
-        grid-row: 2;
-        width: 100%;
-        height: 100%;
-    }
-
-    .color-icon {
-        width: 45px;
-        height: 45px;
-        padding: 0;
-        margin-right: 5px;
-        margin-left: 5px;
-        border: 5px solid red;
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: cover;
-        border-radius: 50%;
-    }
-
-    .movable {
-        position: absolute;
-        right: 0px;
-        top: 0px;
-        z-index: 10;
-        display: hidden;
-        pointer-events: none;
-    }
-
-    .yours {
-        margin-right: 10px;
-    }
-    
-    span {
-        padding: 5px;
-        display: inline-block;
-    }
-
-
     :global(.dcg-graph-outer) {
         cursor: none;
     }
-
-    /*
-    :global(div.dcg-new-expression.dcg-opened) {
-        transform: translateX(-500px);
-    }
-    */
-
 </style>
 
