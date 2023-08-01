@@ -28,7 +28,7 @@
         let increments = window.innerHeight;
         console.log(increments);
 
-        startSmoothScroll(increments);
+        //startSmoothScroll(increments);
 
     });
 
