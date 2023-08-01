@@ -1,6 +1,7 @@
 <script lang="ts">
     import ImagePart from "$lib/homepage/ImagePart.svelte";
-import TextPart from "$lib/homepage/TextPart.svelte";
+    import TextPart from "$lib/homepage/TextPart.svelte";
+    
     import "../app.css";
 
     let texts = [
@@ -9,14 +10,6 @@ import TextPart from "$lib/homepage/TextPart.svelte";
         "Point to interesting intersections",
         "See who is editing what",
         "Built for tutors, by a tutor",
-    ];
-
-    let grayAmounts = [
-        600,
-        100,
-        200,
-        100,
-        50
     ];
 
     let images = [
@@ -47,8 +40,6 @@ import TextPart from "$lib/homepage/TextPart.svelte";
             </div>
             
         </div>
-
-        <div class="w-full h-10 bg-gray-100"></div>
     {/each}
 
 </div>
