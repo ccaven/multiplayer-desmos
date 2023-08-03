@@ -32,42 +32,25 @@
     on:click={()=>activated=true}
     on:keydown={null}
 >
-    <p class="text-2xl text-white font-normal place-self-center mono">Invite others</p>
+    <p class="text-2xl text-white font-normal place-self-center">Invite others</p>
 </div>
 
+<div class="
+    p-2 h-12 mr-2 ml-2 grid justify-center translate-y-[0.1rem] 
+    border-2 {activated?"border-opacity-100":"border-opacity-0"} transition-all border-white
+">
+    <p class="{activated?"text-opacity-100":"text-opacity-0"} transition-all text-lg text-white font-normal place-self-center font-mono">{url}</p>
+</div>
 
-
-
-
-<!-- Background -->
-<div
-    class="
-        absolute top-0 left-0 w-screen h-screen flex 
-        justify-center items-center bg-transparent z-10
-        {activated?"opacity-100":"opacity-0"} transition-opacity
-        {activated?"pointer-events-auto":"pointer-events-none"}
-    "
-    style:background-color="rgba(0, 0, 0, 0.2)"
->
-
-    <!-- Modal -->
-    <div 
-        class="rounded-lg p-6 text-white inline text-lg shadow-md bg-gray-800"
-    >
-        <p>
-            Click to copy your personalized invite link:
-            <span
-                class="border-2 border-white p-2 cursor-pointer ml-1"
-                style:font-family="Courier New"
-                on:click={() => {
-                    navigator.clipboard.writeText(url);
-                    activated = false;
-                    alert("Copied link!");
-                }}
-                on:keydown={()=>{}}
-            >
-                {url}
-            </span>
-        </p>
+<div class="w-12 h-12 cursor-pointer" on:click={()=>activated=false} on:keydown={null}>
+    <div class="absolute rotate-45 translate-x-6 translate-y-6">
+        <div class="
+            absolute w-8 h-[0.1rem] bg-white -translate-x-1/2 -translate-y-1/2
+            {activated?"bg-opacity-100":"bg-opacity-0"} transition-all
+        "/>
+        <div class="
+            absolute w-[0.1rem] h-8 bg-white -translate-x-1/2 -translate-y-1/2
+            {activated?"bg-opacity-100":"bg-opacity-0"} transition-all
+        "/>
     </div>
 </div>
