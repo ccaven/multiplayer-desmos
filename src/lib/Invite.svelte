@@ -2,9 +2,11 @@
     export let url: string;
 
     let activated: boolean = false;
+
 </script>
 
 <!-- NOTE: the colors are weird because we apply "filter:invert()" -->
+<!--
 <img 
     src="send-icon-2.png" 
     alt="" 
@@ -12,6 +14,30 @@
     on:click={() => {activated = true} }
     on:keydown={()=>{}}
 />
+-->
+
+<div class="w-12 h-12 p-2">
+    <div 
+        class="cursor-pointer w-full h-full scale-75"
+        on:click={()=>activated=true}
+        on:keydown={null}
+    >
+        <div class="w-8 h-[0.25rem] bg-white absolute translate-y-[0.875rem] rounded-full"></div>
+        <div class="w-[0.25rem] h-8 bg-white absolute translate-x-[0.875rem] rounded-full"></div>
+    </div>
+</div>
+
+<div 
+    class="h-12 mr-2 p-0 grid justify-center -translate-y-[0.05rem] cursor-pointer"
+    on:click={()=>activated=true}
+    on:keydown={null}
+>
+    <p class="text-2xl text-white font-normal place-self-center mono">Invite others</p>
+</div>
+
+
+
+
 
 <!-- Background -->
 <div

@@ -82,44 +82,11 @@ export function createUserMetadata() {
     //     { color: '#1be7ff', light: '#1be7ff' }
     // ]
 
-    const imageUrls = [
-        "animals/armadillo_1.png",
-        "animals/capy_1.png",
-        "animals/capy_2.png",
-        "animals/cat_1.png",
-        "animals/cat_2.png",
-        "animals/cat_3.png",
-        "animals/cat_4.png",
-        "animals/cat_5.png",
-        "animals/dog_1.png",
-        "animals/dog_2.png",
-        "animals/dog_3.png",
-        "animals/dog_4.png",
-        "animals/dolphin_1.png",
-        "animals/dolphin_2.png",
-        "animals/dolphin_3.png",
-        "animals/dolphin_4.png",
-        "animals/goldfish_1.png",
-        "animals/goldfish_2.png",
-        "animals/goldfish_3.png",
-        "animals/penguin_1.png",
-        "animals/penguin_2.png",
-        "animals/penguin_3.png",
-        "animals/polar_bear_1.png",
-        "animals/polar_bear_2.png",
-        "animals/polar_bear_3.png",
-        "animals/polar_bear_4.png",
-        "animals/turtle_1.png",
-        "animals/turtle_2.png",
-        "animals/turtle_3.png",
-    ]
-
     const colorGroup = colorGroups[Math.random() * colorGroups.length | 0];
-    const imageUrl = imageUrls[Math.random() * imageUrls.length | 0];
 
     const userId = makeId(8);
 
-    return { imageUrl, colorGroup, userId };
+    return { colorGroup, userId };
 }
 
 export function areExpressionsEqual(newExpressions: Desmos.ExpressionState[], pastExpressions: Desmos.ExpressionState[]) {

@@ -3,11 +3,14 @@
     // TODO:
     // - Allow annotatons
     // - Style button link
+    
     import * as Y from 'yjs';
     import { WebrtcProvider } from 'y-webrtc';
-    import { makeId, createUserMetadata, areExpressionsEqual } from './helper';
     import { writable } from 'svelte/store';
-    import Invite from './Invite.svelte';
+
+    import Invite from '$lib/Invite.svelte';
+    import PersonIcon from '$lib/PersonIcon.svelte';
+    import { makeId, createUserMetadata, areExpressionsEqual } from '$lib/util/helper';
 
     type UserMetadata = ReturnType<typeof createUserMetadata>;
 
@@ -99,7 +102,7 @@
 
                     // Create widget if it doesn't exist
                     if (!userSelectionNodes.has(meta.userId)) {
-                        const node = document.getElementById(`icon-${meta.userId}`)?.cloneNode() as HTMLElement;
+                        const node = document.getElementById(`icon-${meta.userId}`)?.cloneNode(true) as HTMLElement;
                         userSelectionNodes.set(meta.userId, node);
                     }
 
@@ -117,6 +120,8 @@
                         document.getElementsByClassName("dcg-expressionitem")
                     )[index];
                     
+                    console.log(node);
+
                     box.appendChild(node);
 
                 } else {
@@ -338,6 +343,7 @@
             >
         </a>
         
+        <!--
         <span 
             class="
                 w-16 h-16 p-0 mr-2 ml-2 
@@ -347,12 +353,17 @@
             style:background-image="url({localMeta.imageUrl})"
             style:border-color="{localMeta.colorGroup.color}"
         />
+        -->
+        
+        <PersonIcon color={localMeta.colorGroup.color}/>
 
         <div
-            class="w-1 h-16 bg-white mr-2 ml-2"
+            class="w-[0.2rem] h-8 bg-white mr-2 ml-2 rounded-full"
         />
+
         
         {#each $nameStore as meta}
+            <!--
             <span
                 class="
                     w-16 h-16 p-0 mr-2 ml-2 
@@ -362,6 +373,8 @@
                 style:background-image="url({meta.imageUrl})"
                 style:border-color="{meta.colorGroup.color}"
             />
+            -->
+            <PersonIcon color={meta.colorGroup.color}/>
         {/each}
 
         <Invite url={inviteLink}/>        
@@ -406,12 +419,13 @@
             fill={pos.color}
             stroke="black"
             stroke-width="2px"
-            opacity="0.5"
+            opacity="0.7"
         />
     </svg>
 {/each}
 
 {#each $nameStore as meta}
+    <!--
     <span 
         class="
             absolute right-4 top-1 w-12 h-12 p-0 mr-2 ml-5 
@@ -422,6 +436,17 @@
         style:background-image="url({meta.imageUrl})"
         style:border-color="{meta.colorGroup.color}"
     />
+    -->
+
+    <div id="icon-{meta.userId}" class="
+        hidden absolute right-7 top-1 pointer-events-none w-12 h-12 scale-75
+    ">
+        <PersonIcon 
+            color={meta.colorGroup.color} 
+            bgColor="rgb(55 65 81)"
+            outlineColor="rgb(107 114 128)"
+        />
+    </div>
 {/each}
 
 
