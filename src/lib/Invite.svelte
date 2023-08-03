@@ -16,28 +16,35 @@
 />
 -->
 
-<div class="w-12 h-12 p-2">
+<div class="w-12 h-12">
     <div 
-        class="cursor-pointer w-full h-full scale-75"
+        class="cursor-pointer w-full h-full"
         on:click={()=>activated=true}
         on:keydown={null}
     >
-        <div class="w-8 h-[0.25rem] bg-white absolute translate-y-[0.875rem] rounded-full"></div>
-        <div class="w-[0.25rem] h-8 bg-white absolute translate-x-[0.875rem] rounded-full"></div>
+        <div class="absolute translate-x-6 translate-y-6">
+            <div class="
+                absolute w-6 h-[0.15rem] bg-white rounded-full -translate-x-1/2 -translate-y-1/2
+            "/>
+            <div class="
+                absolute w-[0.15rem] h-6 bg-white rounded-full -translate-x-1/2 -translate-y-1/2
+            "/>
+        </div>
     </div>
 </div>
 
 <div 
-    class="h-12 mr-2 p-0 grid justify-center -translate-y-[0.05rem] cursor-pointer"
+    class="h-12 mr-2 p-0 grid justify-center cursor-pointer -translate-y-[0.05rem]"
     on:click={()=>activated=true}
     on:keydown={null}
 >
-    <p class="text-2xl text-white font-normal place-self-center">Invite others</p>
+    <p class="text-xl text-white font-normal place-self-center">Invite friends</p>
 </div>
 
 <div class="
     p-2 h-12 mr-2 ml-2 grid justify-center translate-y-[0.1rem] 
     border-2 {activated?"border-opacity-100":"border-opacity-0"} transition-all border-white
+    {activated?"":"invisible"}
 ">
     <p class="{activated?"text-opacity-100":"text-opacity-0"} transition-all text-lg text-white font-normal place-self-center font-mono">{url}</p>
 </div>
