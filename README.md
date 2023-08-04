@@ -1,22 +1,17 @@
-# multiplayer-desmos
+# Multiplayer Desmos
 
-Toy multiplayer desmos graphing calculator intended to aid small group peer tutoring.
+![preview img](./static/preview.png)
 
-## TODO:
+It's [Desmos](https://desmos.com/calculator/), but multiplayer.
 
-- [ ] Networking
-    - [ ] Add event for "annotations"
-    - [x] Add user metadata: identifying color
-    - [ ] Add event for "highlighted points"
-    - [x] Add event for "highlighted equation"
-    - [ ] Add event for "kick user"
-    - [x] Send existing equations to new users
-    - [ ] Manually sync notes
-- [ ] Frontend
-    - [x] Match CSS with Desmos elements
-    - [x] Fixup landing page
-        - [x] Responsive design
-        - [x] Require useers to type a name before joining
-    - [ ] Add "Save to Desmos"
-    - [ ] Add markers for other's annotations
-        - [ ] Annotations fade away?
+## Purpose
+
+Multiplayer Desmos was created as a tool for math tutors on [Schoolhouse.world](https://schoolhouse.world/), a platform that provides free peer tutoring.
+
+My hypothesis is that if students are given a way to interact in an online tutoring session beyond language (talking, chatting), then tutors can more effectively create an active learning environment because students can act instead of replying "I understand."
+
+## Engineering
+
+I used the Desmos API for the graph, [Y.js](https://github.com/yjs/yjs) as a peer-to-peer CRDT, and I hosted a signaling server myself.
+
+The frontend is created with SvelteKit and Tailwind CSS.
