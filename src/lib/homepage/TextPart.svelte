@@ -1,5 +1,7 @@
 <script lang="ts">
     export let text: string;
+    export let btnText: string;
+    export let btnUrl: string;
 </script>
 
 <div class="col-span-1">
@@ -14,7 +16,8 @@
                 {text}
             </p>
 
-            <a href="/app">
+            {#if btnText.length > 0}
+            <a href={btnUrl}>
                 <div class="
                     w-48 my-10 m-auto text-center 
                     bg-gradient-to-br from-purple-700 to-orange-700
@@ -23,10 +26,11 @@
                     <p class="
                         text-xl text-white font-normal
                     ">
-                        Start Graphing
+                        {btnText}
                     </p>
                 </div>
             </a>
+            {/if}
         </div>
     </div>
 </div>
