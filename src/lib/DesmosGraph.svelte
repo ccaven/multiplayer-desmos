@@ -47,7 +47,7 @@
         inviteLink = `${window.location.toString().split("?")[0]}?id=${roomId}`;
         
         const provider = new WebrtcProvider(`desmos-${roomId}`, ydoc, {
-            signaling: [ "wss://signal-us-east-1d.xacer.dev:443" ]
+            signaling: [ "wss://yrs-signal.shuttleapp.rs/signaling" ]
         });
 
         provider.awareness.setLocalStateField("user", localMeta);
