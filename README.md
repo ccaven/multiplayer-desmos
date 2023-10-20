@@ -6,7 +6,7 @@ It's [Desmos](https://desmos.com/calculator/), but multiplayer.
 
 ## Usage
 
-Go to `https://graph.xacer/dev/app` and click "Invite others". An invite link will appear - copy and send this link to your friends. The equations and cursor positions will be synced across participant's browsers.
+Go to `https://graph.xacer.dev/app` and click "Invite others". An invite link will appear - copy and send this link to your friends. The equations and cursor positions will be synced across participant's browsers.
 
 ## Features
 
