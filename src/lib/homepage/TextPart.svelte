@@ -26,7 +26,7 @@
                     <p class="
                         text-xl text-white font-normal
                     ">
-                        {btnText}
+                        {@html btnText}
                     </p>
                 </div>
             </a>

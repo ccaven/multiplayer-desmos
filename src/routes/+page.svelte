@@ -8,7 +8,7 @@
     import "../app.css";
 
     let texts = [
-        "Let's learn together",
+        "Multiplayer Desmos",
         "Invite others to your graph",
         "Point to interesting intersections",
         "See who is editing what",
@@ -24,7 +24,7 @@
     ];
 
     let btn_texts = [
-        "Start Graphing",
+        "Open Graph",
         "",
         "",
         "",
@@ -33,7 +33,7 @@
 
     let btn_links = [
         "/app",
-        "/app",
+        "",
         "",
         "",
         "https://github.com/ccaven/multiplayer-desmos"
